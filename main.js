@@ -7,9 +7,16 @@
 //
 // Deliberately kept flat and readable: no frameworks, no bundler.
 
-const { app, BrowserWindow, ipcMain, session, shell, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, session, shell, Menu, protocol, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { pathToFileURL } = require('url');
+
+// Custom scheme for the browser's own pages (start page, settings).
+// Registered before app ready; standard+secure so localStorage works properly.
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'unto', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
+]);
 
 const USER_DATA_DIR = path.join(app.getPath('userData'), 'profile');
 const HISTORY_FILE = path.join(USER_DATA_DIR, 'history.json');
@@ -88,7 +95,18 @@ if (!gotLock) {
     }
   });
 
-  app.whenReady().then(createWindow);
+  app.whenReady().then(() => {
+    // Serve Unto's own pages from unto://app/<file>
+    const rendererDir = path.join(__dirname, 'renderer');
+    protocol.handle('unto', (request) => {
+      const { pathname } = new URL(request.url);
+      const rel = decodeURIComponent(pathname).replace(/^\/+/, '') || 'unto.html';
+      const file = path.normalize(path.join(rendererDir, rel));
+      if (!file.startsWith(rendererDir)) return new Response('forbidden', { status: 403 });
+      return net.fetch(pathToFileURL(file).toString());
+    });
+    createWindow();
+  });
 
   app.on('window-all-closed', () => {
     // Standard quit behavior on both Windows and Linux.
@@ -142,6 +160,14 @@ ipcMain.handle('state:set', (_e, s) => { writeJson(STATE_FILE, s); return true; 
 
 // Private mode: per-tab in-memory session partition ------------------------
 ipcMain.handle('private:partition', () => 'private-' + Date.now());
+
+// Privacy: wipe cache + cookies + storage (settings page) -------------------
+ipcMain.handle('privacy:clearBrowsing', async () => {
+  const s = session.defaultSession;
+  await s.clearCache();
+  await s.clearStorageData({ storages: ['cookies', 'localstorage', 'indexdb', 'serviceworkers'] });
+  return true;
+});
 
 // Session data cleanup on quit for non-private profile
 app.on('before-quit', () => {

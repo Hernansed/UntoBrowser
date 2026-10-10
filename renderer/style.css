@@ -1,13 +1,18 @@
-/* ClearBrowser chrome — flat, small, easy to restyle. */
+/* Unto Browser chrome — единая noir-тема (как на стартовой странице) */
 :root {
-  --bg: #f5f6f7;
-  --chrome: #dee1e6;
-  --chrome-dark: #c7cbd1;
-  --text: #202124;
-  --accent: #1a73e8;
-  --tab-active: #ffffff;
-  --urlbar-bg: #ffffff;
-  --radius: 8px;
+  --bg: #05070d;
+  --bg2: #0a0f1c;
+  --card: #0e1526;
+  --card2: #131c33;
+  --text: #eef2fb;
+  --muted: #8ea0c4;
+  --border: #1d2946;
+  --accent: #2f6fed;
+  --accent2: #5a8bff;
+  --glow: rgba(47, 111, 237, .35);
+  --tab-active: #0e1526;
+  --urlbar-bg: #0e1526;
+  --radius: 10px;
 }
 
 * { box-sizing: border-box; user-select: none; }
@@ -21,64 +26,60 @@ html, body {
   overflow: hidden;
 }
 
-body {
-  display: flex;
-  flex-direction: column;
-}
+body { display: flex; flex-direction: column; }
 
-/* toolbar */
+/* ---------- toolbar ---------- */
 #toolbar {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 6px 8px;
-  background: var(--chrome);
-  flex: 0 0 auto;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
 }
 
 #toolbar button {
   width: 30px;
   height: 30px;
-  border: none;
-  border-radius: 50%;
+  border: 1px solid transparent;
+  border-radius: 8px;
   background: transparent;
   font-size: 15px;
   cursor: pointer;
-  color: var(--text);
+  color: var(--muted);
+  transition: all .15s;
 }
-#toolbar button:hover { background: var(--chrome-dark); }
-#toolbar button:disabled { opacity: 0.35; cursor: default; }
+#toolbar button:hover { background: var(--card); color: var(--text); border-color: var(--border); }
+#toolbar button:disabled { opacity: .3; cursor: default; background: transparent; border-color: transparent; }
 
 #urlbar {
   flex: 1;
   height: 30px;
   margin: 0 4px;
-  padding: 0 12px;
-  border: none;
+  padding: 0 14px;
+  border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--urlbar-bg);
   font-size: 13px;
   color: var(--text);
   outline: none;
   user-select: text;
+  transition: border-color .15s, box-shadow .15s;
 }
-#urlbar:focus { box-shadow: 0 0 0 2px var(--accent); }
+#urlbar:focus { border-color: var(--accent); box-shadow: 0 0 12px var(--glow); }
+#urlbar::placeholder { color: var(--muted); }
 
-/* tab strip */
+/* ---------- tab strip ---------- */
 #tabstrip {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 8px 6px 8px;
-  background: var(--chrome);
+  padding: 4px 8px 6px 8px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
 }
 
-#tabs {
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
+#tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
 
 .tab {
   display: flex;
@@ -87,17 +88,22 @@ body {
   padding: 5px 8px 5px 12px;
   min-width: 120px;
   max-width: 220px;
-  border-radius: var(--radius) var(--radius) 0 0;
-  background: var(--chrome-dark);
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
   cursor: default;
   white-space: nowrap;
+  transition: all .15s;
 }
-.tab.active { background: var(--tab-active); }
-.tab .title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.tab:hover { background: var(--card); color: var(--text); }
+.tab.active {
+  background: var(--tab-active);
+  border-color: var(--border);
+  color: var(--text);
+  box-shadow: 0 2px 10px rgba(0,0,0,.3);
 }
+.tab .title { flex: 1; overflow: hidden; text-overflow: ellipsis; }
 .tab .close {
   border: none;
   background: transparent;
@@ -106,45 +112,43 @@ body {
   height: 18px;
   font-size: 11px;
   cursor: pointer;
-  color: var(--text);
+  color: var(--muted);
 }
-.tab .close:hover { background: var(--chrome); }
+.tab .close:hover { background: #e0405a; color: #fff; }
 
 #btn-newtab {
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   width: 26px;
   height: 26px;
-  border-radius: 50%;
+  border-radius: 8px;
   font-size: 16px;
   cursor: pointer;
+  color: var(--muted);
 }
-#btn-newtab:hover { background: var(--chrome-dark); }
+#btn-newtab:hover { background: var(--card); color: var(--text); border-color: var(--border); }
 
-/* content */
-#content {
-  flex: 1;
-  position: relative;
-  background: #fff;
-}
+/* ---------- content ---------- */
+#content { flex: 1; position: relative; background: var(--bg); }
 webview {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   display: flex;
+  background: #fff;
 }
 
-/* menu */
+/* ---------- menu ---------- */
 #menu {
   position: fixed;
   top: 44px;
   right: 8px;
-  min-width: 180px;
-  background: #fff;
-  border: 1px solid #ddd;
+  min-width: 190px;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  box-shadow: 0 16px 40px rgba(0,0,0,.5);
   padding: 6px;
   z-index: 100;
   display: flex;
@@ -155,42 +159,15 @@ webview {
   text-align: left;
   border: none;
   background: transparent;
-  padding: 7px 12px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 7px;
   cursor: pointer;
   font-size: 13px;
+  color: var(--text);
 }
-#menu button:hover { background: var(--bg); }
+#menu button:hover { background: var(--card2); }
 
-/* start page shown in empty new tabs */
-.start-page {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  background: linear-gradient(180deg, #eef1f5, #ffffff);
-}
-.start-page h1 { margin: 0; font-size: 28px; font-weight: 600; }
-.start-page input {
-  width: min(520px, 80%);
-  height: 40px;
-  padding: 0 18px;
-  border: 1px solid #d0d3d8;
-  border-radius: 999px;
-  font-size: 14px;
-  outline: none;
-  user-select: text;
-}
-.start-page input:focus { border-color: var(--accent); }
-
-/* embedded Unto start page */
-.startframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-  background: var(--bg);
-}
+/* scrollbars in chrome */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--card2); border-radius: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
