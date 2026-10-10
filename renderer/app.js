@@ -70,6 +70,10 @@ function createTab(url = START_PAGE, isPrivate = false) {
   }
   view.setAttribute('allowpopups', 'true');
   view.style.display = 'none';
+  // Electron docs pattern: set src BEFORE inserting into the DOM. The value is
+  // stored as an attribute and applied when the webview attaches. Assigning
+  // after insertion (even deferred) is silently dropped -> blank white tab.
+  view.src = url;
   els.content.appendChild(view);
 
   const tab = { id, view, el: tabEl, titleEl, private: isPrivate };
@@ -131,10 +135,6 @@ function createTab(url = START_PAGE, isPrivate = false) {
   api.onOpenUrlRequest((u) => createTab(u, false));
 
   activateTab(id);
-  // Assign the URL asynchronously: a webview needs one layout pass after
-  // insertion before accepting a src — assigning synchronously is silently
-  // dropped (root cause of the earlier blank tabs).
-  setTimeout(() => { view.src = url; }, 0);
   return id;
 }
 
