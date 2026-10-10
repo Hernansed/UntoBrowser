@@ -5,7 +5,7 @@
 // how modern Electron browsers isolate tabs.
 
 const api = window.unto;
-const START_PAGE = 'unto.html'; // bundled start page: Unto (themes, bookmarks, AI)
+const START_PAGE = 'unto.html'; // bundled start page: Unto (themes, bookmarks, AI) — rendered as iframe
 const HOME_URL = 'unto.html';
 
 const els = {
@@ -72,8 +72,19 @@ function createTab(url = START_PAGE, isPrivate = false) {
   view.style.display = 'none';
   els.content.appendChild(view);
 
-  const tab = { id, view, el: tabEl, titleEl, private: isPrivate };
+  const tab = { id, view, el: tabEl, titleEl, private: isPrivate, iframe: null, navigated: url !== START_PAGE };
   tabs.push(tab);
+
+  // Start tabs embed Unto directly in the chrome document (iframe) — no webview
+  // involved, so the start page always renders.
+  if (url === START_PAGE) {
+    const fr = document.createElement('iframe');
+    fr.className = 'startframe';
+    fr.src = START_PAGE;
+    fr.style.display = 'none';
+    els.content.appendChild(fr);
+    tab.iframe = fr;
+  }
 
   // ---- webview events ----
   view.addEventListener('did-start-loading', () => {
@@ -128,14 +139,36 @@ function createTab(url = START_PAGE, isPrivate = false) {
   api.onOpenUrlRequest((u) => createTab(u, false));
 
   activateTab(id);
-  view.src = url; // relative paths resolve against the chrome document
+  if (url !== START_PAGE) view.src = url; // start tabs show the iframe instead
   return id;
 }
 
+// Unto (iframe) asks the shell to navigate this tab to a real URL
+window.addEventListener('message', (e) => {
+  const t = tabs.find((x) => x.iframe && x.iframe.contentWindow === e.source);
+  if (!t || !e.data || typeof e.data.untoNav !== 'string') return;
+  navigateTabTo(t, e.data.untoNav);
+});
+
+function navigateTabTo(tab, url) {
+  tab.navigated = true;
+  if (tab.iframe) tab.iframe.style.display = 'none';
+  tab.view.style.display = 'flex';
+  tab.view.loadURL(url);
+  if (tab.id === activeId) {
+    setUrlbar(url);
+    els.bookmark.disabled = !/^https?:\/\//i.test(url);
+  }
+}
+
 function onNavigated(tab, url) {
+  // A webview navigation means the tab left the Unto start page.
+  if (tab.iframe && !url.endsWith('/' + START_PAGE) && url !== 'about:blank') {
+    tab.navigated = true;
+    tab.iframe.style.display = 'none';
+  }
   tab.view.style.display = 'flex';
   if (tab.id === activeId) {
-    // hide chrome URL for the bundled start page
     setUrlbar(url.endsWith('/' + START_PAGE) ? '' : (url === 'about:blank' ? '' : url));
     els.bookmark.disabled = !/^https?:\/\//i.test(url);
   }
@@ -146,12 +179,18 @@ function activateTab(id) {
   for (const t of tabs) {
     const on = t.id === id;
     t.el.classList.toggle('active', on);
-    t.view.style.display = on ? 'flex' : 'none';
+    if (t.iframe) {
+      t.iframe.style.display = on && !t.navigated ? 'flex' : 'none';
+      t.view.style.display = on && t.navigated ? 'flex' : 'none';
+    } else {
+      t.view.style.display = on ? 'flex' : 'none';
+    }
   }
   const t = activeTab();
   if (t) {
     const url = t.view.getURL();
-    setUrlbar(url.endsWith('/' + START_PAGE) ? '' : url);
+    const showStart = t.iframe && !t.navigated;
+    setUrlbar(showStart ? '' : (url.endsWith('/' + START_PAGE) ? '' : url));
     els.bookmark.disabled = !/^https?:\/\//i.test(url);
     updateNavButtons(t.view);
   }
@@ -163,6 +202,7 @@ function closeTab(id) {
   if (i === -1) return;
   const [t] = tabs.splice(i, 1);
   t.el.remove();
+  if (t.iframe) t.iframe.remove();
   t.view.remove();
   if (tabs.length === 0) {
     window.close();
@@ -178,8 +218,7 @@ async function navigateFromUrlbar() {
   const tab = activeTab();
   if (!tab) return;
   const url = await api.nav.normalize(els.urlbar.value);
-  tab.view.style.display = 'flex';
-  tab.view.loadURL(url);
+  navigateTabTo(tab, url);
   tab.view.focus();
 }
 
@@ -195,7 +234,14 @@ els.reload.addEventListener('click', () => {
 els.home.addEventListener('click', () => {
   const tab = activeTab();
   if (!tab) return;
-  tab.view.loadURL(HOME_URL);
+  // Home always returns to the Unto start page (iframe for start tabs).
+  tab.navigated = false;
+  if (tab.iframe) {
+    tab.iframe.src = START_PAGE; // reload fresh
+    activateTab(tab.id);
+  } else {
+    tab.view.loadURL(HOME_URL);
+  }
 });
 els.bookmark.addEventListener('click', async () => {
   const tab = activeTab();

@@ -359,9 +359,14 @@ function smartUrl(text){
   if(/^[\w-]+(\.[\w-]+)+(:\d+)?(\/.*)?$/.test(t) || /^localhost(:\d+)?/.test(t)) return 'https://'+t;
   return ENGINES[engine].url.replace('%s', encodeURIComponent(t));
 }
+function go(u){
+  // inside the browser shell -> tell the tab to navigate; standalone -> navigate here
+  if(window.parent !== window){ window.parent.postMessage({ untoNav: u }, '*'); }
+  else { window.location.href = u; }
+}
 function doSearch(){
   const u = smartUrl($('#q').value);
-  if(u){ window.location.href = u; }
+  if(u){ go(u); }
 }
 $('#go').onclick = doSearch;
 $('#q').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
@@ -420,6 +425,10 @@ function renderBm(){
     bookmarks.splice(+x.dataset.i,1); LS.set('bookmarks', bookmarks); renderBm();
   });
   $('#bmAdd').onclick = openBmModal;
+  // bookmark click inside the shell -> navigate the tab instead of the iframe
+  $('#bmgrid').querySelectorAll('a.bm').forEach(a => a.addEventListener('click', e => {
+    if(window.parent !== window){ e.preventDefault(); go(a.href); }
+  }));
 }
 let editIdx = -1;
 function openBmModal(){
