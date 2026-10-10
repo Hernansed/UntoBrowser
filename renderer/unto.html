@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unto</title>
+<style>
+/* ============ theme tokens ============ */
+:root{
+  --bg:#05070d; --bg2:#0a0f1c; --card:#0e1526; --card2:#131c33;
+  --text:#eef2fb; --muted:#8ea0c4; --border:#1d2946;
+  --accent:#2f6fed; --accent2:#5a8bff; --glow:rgba(47,111,237,.35);
+  --radius:14px; --anim:1;
+}
+[data-theme="ocean"]{ --bg:#03121f; --bg2:#04182b; --card:#062235; --card2:#0a2d47; --text:#e6f4ff; --muted:#7fa8c9; --border:#0f3a58; --accent:#0ea5c9; --accent2:#38c2e0; --glow:rgba(14,165,201,.35); }
+[data-theme="snow"]{ --bg:#f4f6fb; --bg2:#eef1f8; --card:#ffffff; --card2:#f2f5fb; --text:#111827; --muted:#64748b; --border:#dfe5f0; --accent:#2456d6; --accent2:#4a74e8; --glow:rgba(36,86,214,.25); }
+[data-theme="graphite"]{ --bg:#121316; --bg2:#17181c; --card:#1d1f24; --card2:#24262c; --text:#e8e9ec; --muted:#9aa0ab; --border:#2e3138; --accent:#7c8cff; --accent2:#9aa6ff; --glow:rgba(124,140,255,.3); }
+[data-theme="midnight"]{ --bg:#000308; --bg2:#020910; --card:#04101c; --card2:#071a2b; --text:#dfeaff; --muted:#6f87ad; --border:#10263c; --accent:#1e3a8a; --accent2:#3b82f6; --glow:rgba(59,130,246,.3); }
+html[data-anim="0"] *{ animation:none!important; transition:none!important; }
+@media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } }
+
+*{ box-sizing:border-box; margin:0; }
+body{
+  min-height:100vh; font:15px/1.5 system-ui,sans-serif; color:var(--text);
+  background:radial-gradient(1100px 500px at 50% -10%, var(--bg2), var(--bg));
+  display:flex; flex-direction:column; align-items:center; padding:8vh 20px 40px;
+}
+
+/* ============ micro-animations ============ */
+@keyframes fadeUp{ from{ opacity:0; transform:translateY(14px);} to{ opacity:1; transform:none;} }
+@keyframes glowPulse{ 0%,100%{ box-shadow:0 0 0 0 var(--glow);} 50%{ box-shadow:0 0 22px 2px var(--glow);} }
+.fade{ opacity:0; animation:fadeUp .5s ease forwards; }
+.d1{animation-delay:.05s}.d2{animation-delay:.12s}.d3{animation-delay:.2s}.d4{animation-delay:.3s}
+
+/* ============ header ============ */
+.top{ position:fixed; top:14px; right:16px; display:flex; gap:8px; }
+.iconbtn{
+  width:36px; height:36px; border-radius:10px; border:1px solid var(--border);
+  background:var(--card); color:var(--muted); font-size:16px; cursor:pointer;
+  transition:transform .15s, color .15s, border-color .15s;
+}
+.iconbtn:hover{ color:var(--text); border-color:var(--accent); transform:translateY(-2px); }
+.clock{ position:fixed; top:18px; left:20px; font-size:13px; color:var(--muted); letter-spacing:.5px; }
+
+/* ============ search ============ */
+h1{ font-size:clamp(28px,5vw,44px); font-weight:700; letter-spacing:-.5px; margin-bottom:6px; }
+h1 span{ color:var(--accent); }
+.tagline{ color:var(--muted); font-size:13.5px; margin-bottom:26px; }
+.searchwrap{ width:min(620px,92vw); position:relative; }
+.engines{
+  display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-bottom:12px;
+}
+.engines button{
+  border:1px solid var(--border); background:var(--card); color:var(--muted);
+  padding:5px 13px; border-radius:999px; font-size:12.5px; cursor:pointer;
+  transition:all .15s;
+}
+.engines button:hover{ color:var(--text); transform:translateY(-1px); }
+.engines button.on{
+  background:var(--accent); border-color:var(--accent); color:#fff;
+  box-shadow:0 4px 14px var(--glow);
+}
+.searchbar{
+  display:flex; align-items:center; background:var(--card);
+  border:1px solid var(--border); border-radius:16px; padding:4px 6px 4px 18px;
+  transition:box-shadow .2s, border-color .2s;
+}
+.searchbar:focus-within{ border-color:var(--accent); animation:glowPulse 2.4s ease infinite; }
+.searchbar input{
+  flex:1; background:none; border:none; outline:none; color:var(--text);
+  font-size:16px; padding:12px 0; min-width:0;
+}
+.searchbar input::placeholder{ color:var(--muted); }
+.searchbar .go{
+  border:none; background:var(--accent); color:#fff; border-radius:12px;
+  padding:10px 22px; font-size:14.5px; cursor:pointer; transition:filter .15s, transform .15s;
+}
+.searchbar .go:hover{ filter:brightness(1.15); transform:translateY(-1px); }
+.suggest{
+  position:absolute; left:0; right:0; top:calc(100% + 8px); z-index:30;
+  background:var(--card); border:1px solid var(--border); border-radius:14px;
+  overflow:hidden; box-shadow:0 16px 40px rgba(0,0,0,.35); display:none;
+}
+.suggest.open{ display:block; }
+.suggest div{ padding:10px 18px; cursor:pointer; color:var(--muted); font-size:14px; }
+.suggest div:hover,.suggest div.sel{ background:var(--card2); color:var(--text); }
+.suggest b{ color:var(--accent2); font-weight:600; }
+
+/* ============ bookmarks ============ */
+.bmhead{
+  width:min(760px,94vw); display:flex; align-items:center; justify-content:space-between;
+  margin:38px 0 14px;
+}
+.bmhead h2{ font-size:14px; color:var(--muted); font-weight:600; letter-spacing:1.2px; text-transform:uppercase; }
+.bmhead button{
+  border:none; background:none; color:var(--accent2); font-size:13px; cursor:pointer;
+}
+.bmgrid{
+  width:min(760px,94vw); display:grid; gap:12px;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+}
+.bm{
+  display:flex; align-items:center; gap:10px; padding:12px 14px;
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  text-decoration:none; color:var(--text); position:relative;
+  transition:transform .16s, border-color .16s, box-shadow .16s;
+}
+.bm:hover{ transform:translateY(-3px); border-color:var(--accent); box-shadow:0 10px 24px var(--glow); }
+.bm img{ width:22px; height:22px; border-radius:6px; background:var(--card2); flex:none; }
+.bm .t{ font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bm .x{
+  position:absolute; top:-7px; right:-7px; width:20px; height:20px; border-radius:50%;
+  border:none; background:var(--card2); color:var(--muted); font-size:11px; cursor:pointer;
+  opacity:0; transition:opacity .15s;
+}
+.bm:hover .x{ opacity:1; }
+.bm .x:hover{ background:#e0405a; color:#fff; }
+.addbm{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  border:1.5px dashed var(--border); border-radius:var(--radius); min-height:48px;
+  color:var(--muted); cursor:pointer; font-size:13.5px; background:none;
+  transition:border-color .15s, color .15s;
+}
+.addbm:hover{ border-color:var(--accent); color:var(--text); }
+
+/* ============ footer ============ */
+.foot{ margin-top:auto; padding-top:40px; color:var(--muted); font-size:12px; }
+.foot kbd{
+  background:var(--card2); border:1px solid var(--border); border-radius:5px;
+  padding:1px 6px; font-size:11px; margin:0 2px;
+}
+
+/* ============ panels ============ */
+.panel{
+  position:fixed; top:0; right:-430px; width:420px; max-width:96vw; height:100vh; z-index:60;
+  background:var(--bg2); border-left:1px solid var(--border);
+  display:flex; flex-direction:column; transition:right .28s cubic-bezier(.2,.8,.2,1);
+  box-shadow:-24px 0 60px rgba(0,0,0,.4);
+}
+.panel.open{ right:0; }
+.panel header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 18px; border-bottom:1px solid var(--border);
+}
+.panel header h3{ font-size:15px; }
+.panel .body{ flex:1; overflow-y:auto; padding:16px 18px; }
+.field{ margin-bottom:14px; }
+.field label{ display:block; font-size:12px; color:var(--muted); margin-bottom:5px; letter-spacing:.4px; }
+.field input,.field select{
+  width:100%; background:var(--card); color:var(--text); border:1px solid var(--border);
+  border-radius:10px; padding:10px 12px; font-size:13.5px; outline:none;
+}
+.field input:focus{ border-color:var(--accent); }
+.btn{
+  background:var(--accent); color:#fff; border:none; border-radius:10px;
+  padding:10px 16px; font-size:13.5px; cursor:pointer; transition:filter .15s;
+}
+.btn:hover{ filter:brightness(1.15); }
+.btn.ghost{ background:var(--card); color:var(--text); border:1px solid var(--border); }
+.row{ display:flex; gap:8px; }
+
+/* theme picker */
+.themelist{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:16px; }
+.swatch{
+  height:52px; border-radius:10px; border:2px solid var(--border); cursor:pointer;
+  display:flex; align-items:flex-end; justify-content:center; font-size:9.5px;
+  color:var(--muted); padding-bottom:4px; transition:transform .15s, border-color .15s;
+}
+.swatch:hover{ transform:translateY(-2px); }
+.swatch.on{ border-color:var(--accent); color:var(--text); }
+.toggl{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; font-size:13.5px; }
+.toggl input{ accent-color:var(--accent); width:17px; height:17px; }
+
+/* AI chat */
+.chat{ flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+.msg{ max-width:88%; padding:10px 13px; border-radius:13px; font-size:13.5px; white-space:pre-wrap; word-break:break-word; }
+.msg.user{ align-self:flex-end; background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
+.msg.ai{ align-self:flex-start; background:var(--card); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.msg.err{ align-self:center; background:none; color:#e0405a; font-size:12.5px; }
+.chatin{ display:flex; gap:8px; padding:12px; border-top:1px solid var(--border); }
+.chatin input{ flex:1; }
+.hint{ color:var(--muted); font-size:12px; padding:6px 2px 0; }
+.modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:80; display:none; align-items:center; justify-content:center; }
+.modal.open{ display:flex; }
+.modal .card{
+  width:min(420px,92vw); background:var(--bg2); border:1px solid var(--border);
+  border-radius:16px; padding:20px; box-shadow:0 30px 80px rgba(0,0,0,.5);
+}
+.modal h3{ margin-bottom:14px; font-size:16px; }
+</style>
+</head>
+<body>
+
+<div class="clock fade d1" id="clock"></div>
+
+<div class="top fade d1">
+  <button class="iconbtn" id="btnTheme" title="Themes (T)">🎨</button>
+  <button class="iconbtn" id="btnAI" title="Unto AI (A)">✦</button>
+  <button class="iconbtn" id="btnSet" title="Settings">⚙️</button>
+</div>
+
+<h1 class="fade d1">Un<span>to</span></h1>
+<div class="tagline fade d2" id="tagline">Search the web, your way.</div>
+
+<div class="searchwrap fade d2">
+  <div class="engines" id="engines"></div>
+  <div class="searchbar">
+    <input id="q" type="text" placeholder="Search or enter address" autocomplete="off" spellcheck="false">
+    <button class="go" id="go">Go</button>
+  </div>
+  <div class="suggest" id="suggest"></div>
+</div>
+
+<div class="bmhead fade d3">
+  <h2>Bookmarks</h2>
+  <button id="bmAddTop">+ Add</button>
+</div>
+<div class="bmgrid fade d3" id="bmgrid"></div>
+
+<div class="foot fade d4">
+  <kbd>/</kbd> search &nbsp; <kbd>T</kbd> themes &nbsp; <kbd>A</kbd> Unto AI
+</div>
+
+<!-- themes panel -->
+<div class="panel" id="pTheme">
+  <header><h3>Themes</h3><button class="iconbtn" data-close>✕</button></header>
+  <div class="body">
+    <div class="themelist" id="themelist"></div>
+    <div class="field">
+      <label>Custom accent</label>
+      <div class="row">
+        <input type="color" id="accentPick" style="height:42px;padding:4px">
+        <button class="btn ghost" id="accentReset">Reset</button>
+      </div>
+    </div>
+    <div class="toggl"><span>Animations</span><input type="checkbox" id="animTog" checked></div>
+    <div class="toggl"><span>24-hour clock</span><input type="checkbox" id="clock24" checked></div>
+  </div>
+</div>
+
+<!-- settings panel -->
+<div class="panel" id="pSet">
+  <header><h3>Settings</h3><button class="iconbtn" data-close>✕</button></header>
+  <div class="body">
+    <div class="field"><label>Default search engine</label><select id="defEngine"></select></div>
+    <h3 style="margin:18px 0 10px;font-size:14px">Unto AI — OpenAI-compatible endpoint</h3>
+    <div class="field"><label>API endpoint (e.g. https://api.openai.com/v1)</label>
+      <input id="aiUrl" placeholder="https://api.openai.com/v1"></div>
+    <div class="field"><label>API key (stored locally in this browser)</label>
+      <input id="aiKey" type="password" placeholder="sk-..."></div>
+    <div class="field"><label>Model</label>
+      <input id="aiModel" placeholder="gpt-4o-mini"></div>
+    <button class="btn" id="saveSet">Save settings</button>
+    <div class="hint">Works with OpenAI, OpenRouter, Groq, LM Studio, Ollama (http://localhost:11434/v1) — any OpenAI-compatible API.</div>
+  </div>
+</div>
+
+<!-- AI panel -->
+<div class="panel" id="pAI">
+  <header><h3>✦ Unto AI</h3><button class="iconbtn" data-close>✕</button></header>
+  <div class="chat" id="chat"><div class="hint">Ask anything. Configure your API key in ⚙️ Settings first.</div></div>
+  <div class="chatin">
+    <input id="chatQ" class="field" style="margin:0" placeholder="Message Unto AI…">
+    <button class="btn" id="chatGo">Send</button>
+  </div>
+</div>
+
+<!-- bookmark modal -->
+<div class="modal" id="bmModal">
+  <div class="card">
+    <h3 id="bmTitle">Add bookmark</h3>
+    <div class="field"><label>Name</label><input id="bmName" placeholder="GitHub"></div>
+    <div class="field"><label>URL</label><input id="bmUrl" placeholder="https://github.com"></div>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn ghost" id="bmCancel">Cancel</button>
+      <button class="btn" id="bmSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= state ================= */
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem('unto.'+k); return v===null?d:JSON.parse(v);}catch(e){ return d; } },
+  set(k, v){ localStorage.setItem('unto.'+k, JSON.stringify(v)); }
+};
+const $ = s => document.querySelector(s);
+
+const ENGINES = {
+  google:     { name:'Google',     url:'https://www.google.com/search?q=%s' },
+  ddg:        { name:'DuckDuckGo', url:'https://duckduckgo.com/?q=%s' },
+  perplexity: { name:'Perplexity', url:'https://www.perplexity.ai/search?q=%s' },
+  bing:       { name:'Bing',       url:'https://www.bing.com/search?q=%s' },
+  brave:      { name:'Brave',      url:'https://search.brave.com/search?q=%s' },
+  youtube:    { name:'YouTube',    url:'https://www.youtube.com/results?search_query=%s' },
+  wikipedia:  { name:'Wikipedia',  url:'https://en.wikipedia.org/wiki/Special:Search?search=%s' },
+};
+let engine = LS.get('engine', 'google');
+
+const DEFAULT_BM = [
+  { name:'GitHub',     url:'https://github.com' },
+  { name:'YouTube',    url:'https://youtube.com' },
+  { name:'Wikipedia',  url:'https://wikipedia.org' },
+  { name:'Hacker News',url:'https://news.ycombinator.com' },
+];
+let bookmarks = LS.get('bookmarks', null) || DEFAULT_BM.slice();
+
+const THEMES = ['noir','ocean','snow','graphite','midnight'];
+
+/* ================= theme ================= */
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  LS.set('theme', t);
+  const accent = LS.get('accent', null);
+  if(accent) document.documentElement.style.setProperty('--accent', accent);
+  else document.documentElement.style.removeProperty('--accent');
+  renderThemeList();
+}
+function renderThemeList(){
+  const cur = document.documentElement.dataset.theme || LS.get('theme','noir');
+  $('#themelist').innerHTML = THEMES.map(t =>
+    `<div class="swatch ${t===cur?'on':''}" data-t="${t}" style="background:var(--bg);color:var(--muted)">${t}</div>`).join('');
+  $('#themelist').querySelectorAll('.swatch').forEach(s =>
+    s.onclick = () => { LS.set('accent', null); applyTheme(s.dataset.t); });
+}
+$('#accentPick').oninput = e => {
+  LS.set('accent', e.target.value);
+  document.documentElement.style.setProperty('--accent', e.target.value);
+};
+$('#accentReset').onclick = () => { LS.set('accent', null); applyTheme(LS.get('theme','noir')); };
+$('#animTog').onchange = e => { LS.set('anim', e.target.checked?'1':'0'); document.documentElement.dataset.anim = e.target.checked?'1':'0'; };
+$('#clock24').onchange = e => { LS.set('h24', e.target.checked); tick(); };
+
+/* ================= clock ================= */
+function tick(){
+  const h24 = LS.get('h24', true);
+  const d = new Date();
+  $('#clock').textContent = d.toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'})
+    + ' · ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',hour12:!h24});
+}
+setInterval(tick, 10000); tick();
+
+/* ================= search ================= */
+function renderEngines(){
+  $('#engines').innerHTML = Object.entries(ENGINES).map(([k,v]) =>
+    `<button class="${k===engine?'on':''}" data-k="${k}">${v.name}</button>`).join('');
+  $('#engines').querySelectorAll('button').forEach(b => b.onclick = () => {
+    engine = b.dataset.k; LS.set('engine', engine); renderEngines(); $('#q').focus();
+  });
+  const sel = $('#defEngine');
+  if(sel && !sel.options.length)
+    sel.innerHTML = Object.entries(ENGINES).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
+  if(sel) sel.value = engine;
+}
+function smartUrl(text){
+  const t = text.trim();
+  if(!t) return null;
+  if(/^https?:\/\//i.test(t) || /^about:/.test(t)) return t;
+  if(/^[\w-]+(\.[\w-]+)+(:\d+)?(\/.*)?$/.test(t) || /^localhost(:\d+)?/.test(t)) return 'https://'+t;
+  return ENGINES[engine].url.replace('%s', encodeURIComponent(t));
+}
+function doSearch(){
+  const u = smartUrl($('#q').value);
+  if(u){ window.location.href = u; }
+}
+$('#go').onclick = doSearch;
+$('#q').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
+
+/* live suggestions (Google suggest via JSONP — no CORS issues) */
+let sugSeq = 0, selIdx = -1;
+$('#q').addEventListener('input', () => {
+  const q = $('#q').value.trim();
+  selIdx = -1;
+  if(q.length < 2 || /^https?:\/\//i.test(q) || /^[\w-]+(\.[\w-]+)+/.test(q)){ closeSug(); return; }
+  const id = ++sugSeq;
+  const cb = 'untoSug' + id;
+  window[cb] = data => { if(id===sugSeq) showSug((data&&data[1])||[]); };
+  const s = document.createElement('script');
+  s.src = 'https://suggestqueries.google.com/complete/search?client=chrome&q='+encodeURIComponent(q)+'&callback='+cb;
+  s.onerror = closeSug;
+  document.body.appendChild(s); s.onload = () => s.remove();
+});
+function showSug(list){
+  if(!list.length){ closeSug(); return; }
+  const q = $('#q').value.trim();
+  $('#suggest').innerHTML = list.slice(0,8).map(s => {
+    const i = s.toLowerCase().indexOf(q.toLowerCase());
+    const name = i>=0 ? s.slice(0,i)+'<b>'+s.slice(i,i+q.length)+'</b>'+s.slice(i+q.length) : s;
+    return `<div data-s="${s.replace(/"/g,'&quot;')}">${name}</div>`;
+  }).join('');
+  $('#suggest').classList.add('open');
+  $('#suggest').querySelectorAll('div').forEach(d =>
+    d.onclick = () => { $('#q').value = d.dataset.s; closeSug(); doSearch(); });
+}
+function closeSug(){ $('#suggest').classList.remove('open'); }
+document.addEventListener('click', e => { if(!e.target.closest('.searchwrap')) closeSug(); });
+$('#q').addEventListener('keydown', e => {
+  const items = [...$('#suggest').querySelectorAll('div')];
+  if(!items.length) return;
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    e.preventDefault();
+    selIdx = (selIdx + (e.key==='ArrowDown'?1:-1) + items.length) % items.length;
+    items.forEach((d,i)=>d.classList.toggle('sel', i===selIdx));
+    $('#q').value = items[selIdx].dataset.s;
+  }
+  if(e.key==='Escape') closeSug();
+});
+
+/* ================= bookmarks ================= */
+function favicon(u){ try{ return 'https://icons.duckduckgo.com/ip3/'+new URL(u).hostname+'.ico'; }catch(e){ return ''; } }
+function renderBm(){
+  $('#bmgrid').innerHTML = bookmarks.map((b,i) =>
+    `<a class="bm" href="${b.url}">
+       <img src="${favicon(b.url)}" onerror="this.style.visibility='hidden'">
+       <span class="t">${b.name}</span>
+       <button class="x" data-i="${i}" title="Delete">✕</button>
+     </a>`).join('') + `<button class="addbm" id="bmAdd">＋ Add bookmark</button>`;
+  $('#bmgrid').querySelectorAll('.x').forEach(x => x.onclick = e => {
+    e.preventDefault(); e.stopPropagation();
+    bookmarks.splice(+x.dataset.i,1); LS.set('bookmarks', bookmarks); renderBm();
+  });
+  $('#bmAdd').onclick = openBmModal;
+}
+let editIdx = -1;
+function openBmModal(){
+  editIdx = -1; $('#bmTitle').textContent='Add bookmark';
+  $('#bmName').value=''; $('#bmUrl').value='';
+  $('#bmModal').classList.add('open'); $('#bmName').focus();
+}
+$('#bmAddTop').onclick = openBmModal;
+$('#bmCancel').onclick = () => $('#bmModal').classList.remove('open');
+$('#bmSave').onclick = () => {
+  const name = $('#bmName').value.trim() || $('#bmUrl').value.trim();
+  let url = $('#bmUrl').value.trim();
+  if(!url) return;
+  if(!/^https?:\/\//i.test(url)) url = 'https://'+url;
+  if(editIdx>=0) bookmarks[editIdx] = {name,url};
+  else bookmarks.push({name,url});
+  LS.set('bookmarks', bookmarks);
+  $('#bmModal').classList.remove('open'); renderBm();
+};
+$('#bmModal').addEventListener('click', e => { if(e.target.id==='bmModal') $('#bmModal').classList.remove('open'); });
+// right-click a bookmark to edit it
+$('#bmgrid').addEventListener('contextmenu', e => {
+  const a = e.target.closest('a.bm'); if(!a) return;
+  e.preventDefault();
+  editIdx = +a.querySelector('.x').dataset.i;
+  $('#bmTitle').textContent='Edit bookmark';
+  $('#bmName').value = bookmarks[editIdx].name;
+  $('#bmUrl').value = bookmarks[editIdx].url;
+  $('#bmModal').classList.add('open');
+});
+
+/* ================= panels ================= */
+function togglePanel(id){
+  const p = $(id), open = p.classList.contains('open');
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('open'));
+  if(!open) p.classList.add('open');
+}
+document.querySelectorAll('[data-close]').forEach(b =>
+  b.onclick = () => b.closest('.panel').classList.remove('open'));
+$('#btnTheme').onclick = () => togglePanel('#pTheme');
+$('#btnSet').onclick = () => togglePanel('#pSet');
+$('#btnAI').onclick = () => togglePanel('#pAI');
+$('#defEngine').onchange = e => { engine = e.target.value; LS.set('engine', engine); renderEngines(); };
+$('#saveSet').onclick = () => {
+  LS.set('ai', { url:$('#aiUrl').value.trim(), key:$('#aiKey').value.trim(), model:$('#aiModel').value.trim() });
+  $('#saveSet').textContent = 'Saved ✓';
+  setTimeout(()=>$('#saveSet').textContent='Save settings', 1200);
+};
+
+/* ================= Unto AI ================= */
+const chat = $('#chat');
+function pushMsg(cls, text){
+  const d = document.createElement('div');
+  d.className = 'msg '+cls; d.textContent = text;
+  chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+  return d;
+}
+async function sendChat(){
+  const q = $('#chatQ').value.trim(); if(!q) return;
+  const cfg = LS.get('ai', {});
+  $('#chatQ').value = '';
+  if(!chat.querySelector('.msg')) chat.innerHTML = '';
+  pushMsg('user', q);
+  if(!cfg.url || !cfg.key){
+    pushMsg('err','No API configured. Open ⚙️ Settings and add an OpenAI-compatible endpoint + key.');
+    return;
+  }
+  const typing = pushMsg('ai','…');
+  try{
+    const res = await fetch(cfg.url.replace(/\/+$/,'')+'/chat/completions', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+cfg.key },
+      body: JSON.stringify({ model: cfg.model || 'gpt-4o-mini',
+        messages:[{role:'system',content:'You are Unto AI, a concise helpful assistant inside the Unto browser start page.'},{role:'user',content:q}] })
+    });
+    if(!res.ok) throw new Error('API error '+res.status+': '+(await res.text()).slice(0,140));
+    const data = await res.json();
+    const full = (data.choices && data.choices[0] && data.choices[0].message.content) || '(empty response)';
+    // typing animation
+    let i = 0; typing.textContent = '';
+    const step = Math.max(2, Math.round(full.length/120));
+    const iv = setInterval(()=>{
+      i += step; typing.textContent = full.slice(0, i);
+      chat.scrollTop = chat.scrollHeight;
+      if(i >= full.length){ typing.textContent = full; clearInterval(iv); }
+    }, 16);
+  }catch(err){
+    typing.remove();
+    pushMsg('err', '⚠ '+err.message);
+  }
+}
+$('#chatGo').onclick = sendChat;
+$('#chatQ').addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
+
+/* ================= shortcuts ================= */
+document.addEventListener('keydown', e => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if(e.key==='/' && !typing){ e.preventDefault(); $('#q').focus(); }
+  if((e.key==='t'||e.key==='T') && !typing) togglePanel('#pTheme');
+  if((e.key==='a'||e.key==='A') && !typing) togglePanel('#pAI');
+  if(e.key==='Escape') document.querySelectorAll('.panel,.modal').forEach(x=>x.classList.remove('open'));
+});
+
+/* ================= boot ================= */
+document.documentElement.dataset.anim = LS.get('anim','1');
+$('#animTog').checked = LS.get('anim','1')==='1';
+$('#clock24').checked = LS.get('h24', true);
+if(LS.get('accent',null)) $('#accentPick').value = LS.get('accent',null);
+const ai = LS.get('ai', {});
+$('#aiUrl').value = ai.url||''; $('#aiKey').value = ai.key||''; $('#aiModel').value = ai.model||'';
+applyTheme(LS.get('theme','noir'));
+renderEngines();
+renderBm();
+$('#q').focus();
+const TAGS = ['Search the web, your way.','Fast. Private. Yours.','One page, whole internet.'];
+$('#tagline').textContent = TAGS[new Date().getDate() % TAGS.length];
+</script>
+</body>
+</html>

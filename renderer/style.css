@@ -1,0 +1,186 @@
+/* ClearBrowser chrome — flat, small, easy to restyle. */
+:root {
+  --bg: #f5f6f7;
+  --chrome: #dee1e6;
+  --chrome-dark: #c7cbd1;
+  --text: #202124;
+  --accent: #1a73e8;
+  --tab-active: #ffffff;
+  --urlbar-bg: #ffffff;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; user-select: none; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font: 13px/1.4 system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* toolbar */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: var(--chrome);
+  flex: 0 0 auto;
+}
+
+#toolbar button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--text);
+}
+#toolbar button:hover { background: var(--chrome-dark); }
+#toolbar button:disabled { opacity: 0.35; cursor: default; }
+
+#urlbar {
+  flex: 1;
+  height: 30px;
+  margin: 0 4px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--urlbar-bg);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  user-select: text;
+}
+#urlbar:focus { box-shadow: 0 0 0 2px var(--accent); }
+
+/* tab strip */
+#tabstrip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 6px 8px;
+  background: var(--chrome);
+}
+
+#tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px 5px 12px;
+  min-width: 120px;
+  max-width: 220px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--chrome-dark);
+  cursor: default;
+  white-space: nowrap;
+}
+.tab.active { background: var(--tab-active); }
+.tab .title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tab .close {
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--text);
+}
+.tab .close:hover { background: var(--chrome); }
+
+#btn-newtab {
+  border: none;
+  background: transparent;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+}
+#btn-newtab:hover { background: var(--chrome-dark); }
+
+/* content */
+#content {
+  flex: 1;
+  position: relative;
+  background: #fff;
+}
+webview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+/* menu */
+#menu {
+  position: fixed;
+  top: 44px;
+  right: 8px;
+  min-width: 180px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0,0,0,.15);
+  padding: 6px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+#menu.hidden { display: none; }
+#menu button {
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+#menu button:hover { background: var(--bg); }
+
+/* start page shown in empty new tabs */
+.start-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: linear-gradient(180deg, #eef1f5, #ffffff);
+}
+.start-page h1 { margin: 0; font-size: 28px; font-weight: 600; }
+.start-page input {
+  width: min(520px, 80%);
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid #d0d3d8;
+  border-radius: 999px;
+  font-size: 14px;
+  outline: none;
+  user-select: text;
+}
+.start-page input:focus { border-color: var(--accent); }

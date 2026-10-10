@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>ClearBrowser</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="toolbar">
+    <button id="btn-back" title="Back (Alt+Left)">&#8592;</button>
+    <button id="btn-fwd" title="Forward (Alt+Right)">&#8594;</button>
+    <button id="btn-reload" title="Reload (Ctrl+R)">&#8635;</button>
+    <button id="btn-home" title="Home">&#8962;</button>
+
+    <input id="urlbar" type="text" spellcheck="false"
+           placeholder="Search or enter address" autocomplete="off">
+
+    <button id="btn-bookmark" title="Bookmark this page">&#9734;</button>
+    <button id="btn-menu" title="Menu">&#9776;</button>
+  </header>
+
+  <div id="tabstrip">
+    <div id="tabs"></div>
+    <button id="btn-newtab" title="New tab (Ctrl+T)">+</button>
+  </div>
+
+  <main id="content"></main>
+
+  <div id="menu" class="hidden">
+    <button data-action="new-tab">New tab</button>
+    <button data-action="private-tab">New private tab</button>
+    <button data-action="history">History</button>
+    <button data-action="clear-history">Clear history</button>
+    <button data-action="bookmarks">Bookmarks</button>
+    <button data-action="zoom-in">Zoom in</button>
+    <button data-action="zoom-out">Zoom out</button>
+    <button data-action="zoom-reset">Reset zoom</button>
+    <button data-action="devtools">Developer tools</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

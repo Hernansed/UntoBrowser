@@ -1,0 +1,36 @@
+{
+  "name": "clearbrowser",
+  "productName": "ClearBrowser",
+  "version": "0.2.0",
+  "description": "A full cross-platform (Windows/Linux) Chromium-based browser with a clean, readable base.",
+  "main": "main.js",
+  "author": "you",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis --publish never",
+    "dist:sh": "electron-builder --linux dir --publish never && node scripts/make-sh-installer.js",
+    "dist": "npm run dist:sh && npm run dist:win"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.example.clearbrowser",
+    "productName": "ClearBrowser",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**",
+      "scripts/**"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    }
+  }
+}
