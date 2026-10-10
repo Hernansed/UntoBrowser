@@ -131,7 +131,10 @@ function createTab(url = START_PAGE, isPrivate = false) {
   api.onOpenUrlRequest((u) => createTab(u, false));
 
   activateTab(id);
-  view.src = url;
+  // Assign the URL asynchronously: a webview needs one layout pass after
+  // insertion before accepting a src — assigning synchronously is silently
+  // dropped (root cause of the earlier blank tabs).
+  setTimeout(() => { view.src = url; }, 0);
   return id;
 }
 
