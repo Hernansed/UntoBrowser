@@ -292,8 +292,16 @@ const ENGINES = {
   perplexity: { name:'Perplexity', url:'https://www.perplexity.ai/search?q=%s' },
   bing:       { name:'Bing',       url:'https://www.bing.com/search?q=%s' },
   brave:      { name:'Brave',      url:'https://search.brave.com/search?q=%s' },
+  ecosia:     { name:'Ecosia',     url:'https://www.ecosia.org/search?q=%s' },
+  startpage:  { name:'Startpage',  url:'https://www.startpage.com/sp/search?query=%s' },
+  mojeek:     { name:'Mojeek',     url:'https://www.mojeek.com/search?q=%s' },
   youtube:    { name:'YouTube',    url:'https://www.youtube.com/results?search_query=%s' },
+  github:     { name:'GitHub',     url:'https://github.com/search?q=%s' },
   wikipedia:  { name:'Wikipedia',  url:'https://en.wikipedia.org/wiki/Special:Search?search=%s' },
+  reddit:     { name:'Reddit',     url:'https://www.reddit.com/search/?q=%s' },
+  amazon:     { name:'Amazon',     url:'https://www.amazon.com/s?k=%s' },
+  maps:       { name:'Maps',       url:'https://www.google.com/maps/search/%s' },
+  images:     { name:'Images',     url:'https://www.google.com/search?tbm=isch&q=%s' },
 };
 let engine = LS.get('engine', 'google');
 

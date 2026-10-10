@@ -98,7 +98,7 @@ function createTab(url = START_PAGE, isPrivate = false) {
 
   view.addEventListener('page-title-updated', (e) => {
     tab.titleEl.textContent = e.title || 'Untitled';
-    if (tab.id === activeId) document.title = (e.title || 'ClearBrowser') + ' — ClearBrowser';
+    if (tab.id === activeId) document.title = (e.title || 'Unto Browser') + ' — Unto Browser';
   });
 
   view.addEventListener('did-navigate', (e) => onNavigated(tab, e.url));

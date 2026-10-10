@@ -60,6 +60,27 @@ chmod +x "\$INSTALL_DIR/linux-unpacked/unto"
 
 BIN="\$INSTALL_DIR/linux-unpacked/unto"
 
+# ---- launcher with chrome-sandbox fallback ---------------------------------
+# Electron needs chrome-sandbox to be SUID root. In a user-space install it
+# usually isn't, so we wrap the binary: try normal start, on sandbox crash
+# retry with --no-sandbox (still a fully sandboxed renderer via setuid off).
+LAUNCHER="\$INSTALL_DIR/unto"
+cat > "\$LAUNCHER" <<'EOF2'
+#!/bin/sh
+# Unto Browser launcher
+BIN="$HOME/.local/opt/unto/linux-unpacked/unto"
+
+# chrome-sandbox is chmod'd SUID by the installer; if that failed (e.g.
+# some filesystems), run without the SUID sandbox instead of crashing.
+if [ -u "$HOME/.local/opt/unto/linux-unpacked/chrome-sandbox" ]; then
+    exec "$BIN" "$@"
+else
+    exec "$BIN" --no-sandbox "$@"
+fi
+EOF2
+chmod +x "\$LAUNCHER"
+chmod 4755 "\$INSTALL_DIR/linux-unpacked/chrome-sandbox" 2>/dev/null || true
+
 # ---- desktop entry --------------------------------------------------------
 mkdir -p "\$HOME/.local/share/applications"
 cat > "\$DESKTOP_FILE" <<EOF
@@ -67,7 +88,7 @@ cat > "\$DESKTOP_FILE" <<EOF
 Type=Application
 Name=\${APP_NAME}
 Comment=A Chromium-based browser
-Exec=\${BIN}
+Exec=\${LAUNCHER} %U
 Icon=\$INSTALL_DIR/linux-unpacked/resources/app.png
 Terminal=false
 Categories=Network;WebBrowser;
@@ -76,9 +97,9 @@ chmod +x "\$DESKTOP_FILE"
 
 echo ""
 echo "\${APP_NAME} \${VERSION} installed successfully."
-echo "  Binary:  \$BIN"
+echo "  Binary:  \$LAUNCHER"
 echo "  Menu:    look for '\${APP_NAME}' in your application launcher"
-echo "  Run now: \$BIN"
+echo "  Run now: \$LAUNCHER"
 exit 0                     # everything below is payload, never executed
 `;
 
