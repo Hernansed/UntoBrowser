@@ -1,3 +1,7 @@
+Just started, no hate pls
+
+
+
 # Unto Browser — full browser for Windows & Linux (Chromium engine)
 
 A complete, cross-platform browser built on **Electron** — which embeds the
