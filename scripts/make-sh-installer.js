@@ -2,7 +2,7 @@
 // scripts/make-sh-installer.js
 //
 // Wraps the electron-builder "dir" output (linux-unpacked) into a single
-// self-extracting POSIX shell installer: dist/ClearBrowser-<version>.sh
+// self-extracting POSIX shell installer: dist/Unto-Browser-<version>.sh
 //
 // The .sh file = shell stub (extract & install logic) + base64 payload.
 // POSIX-ish, needs only: sh, base64, tar, gzip, mkdir, printf.
@@ -18,10 +18,10 @@ const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
 
 const APP_NAME = pkg.productName || pkg.name;
 const VERSION = pkg.version;
-const INSTALL_DIR = '$HOME/.local/opt/clearbrowser';
-const OUT = path.join(dist, `${APP_NAME}-${VERSION}.sh`);
+const INSTALL_DIR = '$HOME/.local/opt/unto';
+const OUT = path.join(dist, `Unto-Browser-${VERSION}.sh`);
 
-if (!fs.existsSync(path.join(unpacked, 'clearbrowser'))) {
+if (!fs.existsSync(path.join(unpacked, 'unto'))) {
   console.error(`\nMissing ${path.relative(root, unpacked)}.\nRun first:  npm run dist:linux:sh  (electron-builder --linux dir)\n`);
   process.exit(1);
 }
@@ -29,7 +29,7 @@ if (!fs.existsSync(path.join(unpacked, 'clearbrowser'))) {
 console.log('Packing', unpacked, '->', path.basename(OUT));
 
 // 1. tar+gzip the unpacked app (deterministic-ish; no owner info needed).
-const payloadFile = path.join(dist, '.clearbrowser-payload.tar.gz');
+const payloadFile = path.join(dist, '.unto-payload.tar.gz');
 execSync(
   `tar -C "${dist}" -czf "${payloadFile}" linux-unpacked`,
   { stdio: 'inherit' }
@@ -43,7 +43,7 @@ set -e
 APP_NAME="${APP_NAME}"
 VERSION="${VERSION}"
 INSTALL_DIR="${INSTALL_DIR}"
-DESKTOP_FILE="$HOME/.local/share/applications/clearbrowser.desktop"
+DESKTOP_FILE="$HOME/.local/share/applications/unto.desktop"
 MARKER='____CLEARBROWSER_PAY''LOAD_BELOW____'   # split so awk only matches the payload line below
 
 # ---- extract --------------------------------------------------------------
@@ -56,9 +56,9 @@ awk "\$AWK_PROG" "\$0" | base64 -d | tar -xzf - -C "\$TMPDIR_X"
 mkdir -p "\$INSTALL_DIR"
 rm -rf "\$INSTALL_DIR/linux-unpacked"
 cp -r "\$TMPDIR_X/linux-unpacked" "\$INSTALL_DIR/"
-chmod +x "\$INSTALL_DIR/linux-unpacked/clearbrowser"
+chmod +x "\$INSTALL_DIR/linux-unpacked/unto"
 
-BIN="\$INSTALL_DIR/linux-unpacked/clearbrowser"
+BIN="\$INSTALL_DIR/linux-unpacked/unto"
 
 # ---- desktop entry --------------------------------------------------------
 mkdir -p "\$HOME/.local/share/applications"

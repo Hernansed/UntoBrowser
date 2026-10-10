@@ -1,8 +1,8 @@
 // preload.js — the only bridge between main and renderer.
-// Exposes a minimal, explicit, promise-based API on window.clearbrowser.
+// Exposes a minimal, explicit, promise-based API on window.unto.
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('clearbrowser', {
+contextBridge.exposeInMainWorld('unto', {
   history: {
     add: (entry) => ipcRenderer.invoke('history:add', entry),
     list: () => ipcRenderer.invoke('history:list'),

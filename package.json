@@ -1,8 +1,8 @@
 {
-  "name": "clearbrowser",
-  "productName": "ClearBrowser",
-  "version": "0.2.0",
-  "description": "A full cross-platform (Windows/Linux) Chromium-based browser with a clean, readable base.",
+  "name": "unto-browser",
+  "productName": "Unto Browser",
+  "version": "0.3.0",
+  "description": "Unto — a full cross-platform (Windows/Linux) Chromium-based browser with the Unto start page.",
   "main": "main.js",
   "author": "you",
   "license": "MIT",
@@ -17,8 +17,9 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.example.clearbrowser",
-    "productName": "ClearBrowser",
+    "appId": "com.unto.browser",
+    "productName": "Unto Browser",
+    "executableName": "unto",
     "files": [
       "main.js",
       "preload.js",

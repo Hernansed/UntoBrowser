@@ -1,4 +1,4 @@
-// main.js — ClearBrowser main process (Electron / Chromium engine)
+// main.js — Unto Browser main process (Electron / Chromium engine)
 //
 // Responsibilities:
 //   * create BrowserWindows (one per browser window)
@@ -55,7 +55,7 @@ function createWindow() {
     height: 800,
     minWidth: 640,
     minHeight: 400,
-    title: 'ClearBrowser',
+    title: 'Unto Browser',
     backgroundColor: '#f5f6f7',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

@@ -4,7 +4,7 @@
 // the page in a separate Chromium process (out-of-process iframe), which is
 // how modern Electron browsers isolate tabs.
 
-const api = window.clearbrowser;
+const api = window.unto;
 const START_PAGE = 'unto.html'; // bundled start page: Unto (themes, bookmarks, AI)
 const HOME_URL = 'unto.html';
 

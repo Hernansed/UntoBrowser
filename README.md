@@ -1,4 +1,4 @@
-# ClearBrowser — full browser for Windows & Linux (Chromium engine)
+# Unto Browser — full browser for Windows & Linux (Chromium engine)
 
 A complete, cross-platform browser built on **Electron** — which embeds the
 real **Chromium** engine — with a clean, readable base: no frameworks, no
@@ -37,8 +37,8 @@ That's it — a working browser window.
 ## Package — two files, one per OS
 
 ```bash
-npm run dist:win     # Windows -> dist/"ClearBrowser Setup 0.1.0.exe"
-npm run dist:sh      # Linux   -> dist/ClearBrowser-0.1.0.sh
+npm run dist:win     # Windows -> dist/"Unto Browser Setup 0.1.0.exe"
+npm run dist:sh      # Linux   -> dist/Unto Browser-0.1.0.sh
 npm run dist         # both (sh first, then exe)
 ```
 
@@ -51,12 +51,12 @@ Windows tool. On a Windows machine it builds with no extra deps.
 **Linux `.sh`** — distro-agnostic single-file installer (works on any Linux
 with a desktop environment, no root needed):
 ```bash
-chmod +x ClearBrowser-0.1.0.sh
-./ClearBrowser-0.1.0.sh
+chmod +x Unto Browser-0.1.0.sh
+./Unto Browser-0.1.0.sh
 ```
-It installs to `~/.local/opt/clearbrowser`, registers an application-menu
+It installs to `~/.local/opt/unto`, registers an application-menu
 entry, and prints the binary path. Remove with
-`rm -rf ~/.local/opt/clearbrowser ~/.local/share/applications/clearbrowser.desktop`.
+`rm -rf ~/.local/opt/unto ~/.local/share/applications/unto.desktop`.
 
 ## Keyboard shortcuts
 
@@ -71,7 +71,7 @@ entry, and prints the binary path. Remove with
 ## Project layout (the whole thing)
 
 ```
-clearbrowser/
+unto/
 ├── main.js            main process: window, IPC API, history/bookmarks storage
 ├── preload.js         security bridge (contextIsolation on, sandbox on)
 ├── scripts/
@@ -97,7 +97,7 @@ clearbrowser/
 ## Security posture
 
 - `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`
-- Renderer talks to main only through the explicit `window.clearbrowser`
+- Renderer talks to main only through the explicit `window.unto`
   API (see `preload.js`) — no raw IPC surface
 - Pages run in `<webview>` with their own process per site
 - CSP set on the chrome document itself
