@@ -196,13 +196,17 @@ async function fetchLatestRelease() {
 
 function pickInstallerAsset(release) {
   const assets = Array.isArray(release.assets) ? release.assets : [];
-  const tag = String(release.tag_name || '');
   if (process.platform === 'win32') {
     // Unto.Browser.Setup.0.6.1.exe (NSIS)
     return assets.find((a) => /^Unto\.Browser\.Setup\.[\d.]+\.exe$/i.test(a.name)) || null;
   }
-  // Unto-Browser-0.6.1.sh (self-extracting installer)
-  return assets.find((a) => /^Unto-Browser-[\d.]+\.sh$/i.test(a.name)) || null;
+  if (process.platform === 'darwin') return null;
+  // Linux: deb on Debian/Ubuntu-family, rpm elsewhere; cross-check with dpkg/rpm
+  const isDeb = fs.existsSync('/etc/debian_version')
+    || (fs.existsSync('/etc/os-release') && /\bid[_=]?(debian|ubuntu|mint|pop|elementary|kali|zorin|deepin|parrot|mx|antiX|devuan|trisquel|raspbian|kylin|neon|astra)\b/i.test(fs.readFileSync('/etc/os-release', 'utf8')));
+  const want = isDeb ? /_amd64\.deb$/ : /\.rpm$/;
+  const fallback = isDeb ? /\.rpm$/ : /_amd64\.deb$/;
+  return assets.find((a) => want.test(a.name)) || assets.find((a) => fallback.test(a.name)) || null;
 }
 
 function downloadTo(url, dest) {
@@ -255,22 +259,31 @@ ipcMain.handle('update:install', async () => {
       return result;
     }
     const tmpDir = app.getPath('temp');
-    const ext = path.extname(asset.name);
     const dest = path.join(tmpDir, asset.name);
     result.status = 'downloading';
     await downloadTo(asset.browser_download_url, dest);
     result.status = 'downloaded';
-    if (ext === '.sh') {
-      fs.chmodSync(dest, 0o755);
-      const child = require('child_process').spawn('/bin/sh', [dest], {
-        detached: true, stdio: 'ignore', env: { ...process.env, UNTO_SILENT: '1' },
-      });
-      child.unref();
-    } else {
+    if (process.platform === 'win32') {
       // NSIS: /S = silent, install over the previous version
       const child = require('child_process').spawn(dest, ['/S'], {
         detached: true, stdio: 'ignore',
       });
+      child.unref();
+    } else {
+      // Linux: .deb / .rpm need root — ask via pkexec (graphical polkit prompt).
+      // Try the native package manager first; fall back to the other format.
+      const hasDpkg = fs.existsSync('/usr/bin/dpkg') || fs.existsSync('/bin/dpkg');
+      const isDebFile = asset.name.endsWith('.deb');
+      const execSh = (cmd) => require('child_process').spawn('/bin/sh', ['-c', cmd], {
+        detached: true, stdio: 'ignore', env: process.env,
+      });
+      const child = isDebFile
+        ? (hasDpkg
+          ? execSh(`pkexec sh -c 'dpkg -i "${dest}" || apt-get install -y -f "${dest}"'`)
+          : execSh(`pkexec sh -c 'rpm -Uvh --force "${dest}"'`))
+        : (hasDpkg
+          ? execSh(`pkexec sh -c 'dpkg -i "${dest}" || apt-get install -y -f "${dest}"'`)
+          : execSh(`pkexec sh -c 'rpm -Uvh --force "${dest}"'`));
       child.unref();
     }
     result.ok = true;

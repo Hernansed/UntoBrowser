@@ -9,8 +9,8 @@
   "scripts": {
     "start": "electron .",
     "dist:win": "electron-builder --win nsis --publish never",
-    "dist:sh": "electron-builder --linux dir --publish never && node scripts/make-sh-installer.js",
-    "dist": "npm run dist:sh && npm run dist:win"
+    "dist:linux": "electron-builder --linux deb rpm --publish never",
+    "dist": "npm run dist:linux && npm run dist:win"
   },
   "devDependencies": {
     "electron": "^33.2.0",
@@ -32,6 +32,11 @@
     "win": {
       "target": "nsis",
       "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": ["deb", "rpm"],
+      "maintainer": "Hernansed <hernansed@users.noreply.github.com>",
+      "category": "Network"
     }
   }
 }

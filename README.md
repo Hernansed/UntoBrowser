@@ -1,7 +1,3 @@
-Just started, no hate pls
-
-
-
 # Unto Browser — full browser for Windows & Linux (Chromium engine)
 
 A complete, cross-platform browser built on **Electron** — which embeds the
@@ -10,22 +6,45 @@ bundler, six plain files.
 
 Native on both target platforms from one codebase:
 - **Windows 10/11** (x64) — NSIS installer (`.exe`)
-- **Linux** (x64) — `.rpm` package **and** a self-extracting `.sh` installer
+- **Linux** (x64) — `.deb` (Debian, Ubuntu, Mint, Pop!_OS, Kali, …) and
+  `.rpm` (Fedora, openSUSE, RHEL, ALT, …) packages
 
-## Features
+## Install — one command
 
-- Real Chromium rendering: modern sites, JS, video, WebRTC all work
-- Tabbed browsing with titles, close buttons, `+` new tab
-- Smart address bar: URL → load, text → DuckDuckGo search
-- Back / Forward / Reload-Stop / Home
-- **History** (persisted on disk, capped at 5000 entries, clearable)
-- **Bookmarks** (persisted, star toggle in the toolbar)
-- **Private tabs** — in-memory session partition: no cookies, cache, or
-  history persisted
-- Popups and `target=_blank` open as new tabs
-- Zoom (Ctrl+/-/0), DevTools per tab, keyboard shortcuts throughout
-- Error pages, single-instance lock, external links (mailto: etc.) handed to
-  the OS
+### Linux (any major distro)
+
+**Debian / Ubuntu / Mint / Pop!_OS / Kali / Zorin / Deepin / Astra:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Hernansed/UntoBrowser/main/scripts/install.sh | bash
+```
+
+The script detects your distro, downloads the latest `.deb` or `.rpm` from
+GitHub Releases and installs it with the right package manager (asking for
+your password via sudo). Also works for **Fedora / RHEL / openSUSE / ALT**:
+the same one-liner picks the `.rpm` automatically.
+
+Prefer doing it manually?
+
+```bash
+# Debian-family
+curl -fsSLo unto.deb https://github.com/Hernansed/UntoBrowser/releases/latest/download/unto-browser-latest.deb
+sudo apt install ./unto.deb && rm unto.deb
+
+# Fedora / RHEL / openSUSE
+curl -fsSLo unto.rpm https://github.com/Hernansed/UntoBrowser/releases/latest/download/unto-browser-latest.rpm
+sudo dnf install ./unto.rpm && rm unto.rpm      # or: sudo zypper in ./unto.rpm
+```
+
+After install, launch **Unto** from your application menu, or run `unto`
+in a terminal. Updates: the browser checks GitHub on every start and offers
+to update itself from Settings → Updates (installs the new .deb/.rpm for you).
+
+### Windows 10/11
+
+Download [`Unto.Browser.Setup.<version>.exe`](https://github.com/Hernansed/UntoBrowser/releases/latest)
+and run it — Start-menu entry, uninstaller in "Apps & Features".
+The browser updates itself the same way (Settings → Updates).
 
 ## Run it (development)
 
@@ -38,29 +57,30 @@ npm start
 
 That's it — a working browser window.
 
-## Package — two files, one per OS
+## Package — build installers yourself
 
 ```bash
-npm run dist:win     # Windows -> dist/"Unto Browser Setup 0.1.0.exe"
-npm run dist:sh      # Linux   -> dist/Unto Browser-0.1.0.sh
-npm run dist         # both (sh first, then exe)
+npm run dist:linux   # -> dist/unto-browser_<ver>_amd64.deb + dist/unto-browser_<ver>.x86_64.rpm
+npm run dist:win     # -> dist/"Unto Browser Setup <ver>.exe"   (Wine needed on Linux for NSIS)
+npm run dist         # both
 ```
 
-**Windows `.exe`** — full NSIS installer: Start-menu entry, uninstaller in
-"Apps & Features", per-user or per-machine choice.
-Building the `.exe` on Linux needs Wine (`sudo pacman -S wine` on Arch,
-`sudo apt install wine` on Debian/Ubuntu) because the NSIS compiler is a
-Windows tool. On a Windows machine it builds with no extra deps.
+## Features
 
-**Linux `.sh`** — distro-agnostic single-file installer (works on any Linux
-with a desktop environment, no root needed):
-```bash
-chmod +x Unto Browser-0.1.0.sh
-./Unto Browser-0.1.0.sh
-```
-It installs to `~/.local/opt/unto`, registers an application-menu
-entry, and prints the binary path. Remove with
-`rm -rf ~/.local/opt/unto ~/.local/share/applications/unto.desktop`.
+- Real Chromium rendering: modern sites, JS, video, WebRTC all work
+- Tabbed browsing with titles, close buttons, `+` new tab
+- Smart address bar: URL → load, text → DuckDuckGo search
+- Back / Forward / Reload-Stop / Home
+- **History** (persisted on disk, capped at 5000 entries, clearable)
+- **Bookmarks** (persisted, star toggle in the toolbar)
+- **Private tabs** — in-memory session partition: no cookies, cache, or
+  history persisted
+- Popups and `target=_blank` open as new tabs
+- **Auto-update** — checks GitHub Releases on start; new version installs
+  right from Settings → Updates (deb/rpm via polkit prompt, NSIS silent)
+- Zoom (Ctrl+/-/0), DevTools per tab, keyboard shortcuts throughout
+- Error pages, single-instance lock, external links (mailto: etc.) handed to
+  the OS
 
 ## Keyboard shortcuts
 
@@ -76,10 +96,8 @@ entry, and prints the binary path. Remove with
 
 ```
 unto/
-├── main.js            main process: window, IPC API, history/bookmarks storage
+├── main.js            main process: window, IPC API, history/bookmarks storage, auto-update
 ├── preload.js         security bridge (contextIsolation on, sandbox on)
-├── scripts/
-│   └── make-sh-installer.js   builds the .sh installer from the dir output
 └── renderer/
     ├── index.html     chrome UI: toolbar, tab strip, menu
     ├── style.css      all styling, small and flat
@@ -97,6 +115,7 @@ unto/
 | More persisted data | IPC handlers in `main.js` + `preload.js` |
 | Ad blocking | `session.defaultSession.webRequest` filtering in `main.js` |
 | Downloads UI | `session.on('will-download')` in `main.js` |
+| Auto-update | `update:*` handlers in `main.js`, Updates section in `renderer/settings.html` |
 
 ## Security posture
 
@@ -105,3 +124,7 @@ unto/
   API (see `preload.js`) — no raw IPC surface
 - Pages run in `<webview>` with their own process per site
 - CSP set on the chrome document itself
+
+---
+
+Just started, no hate pls

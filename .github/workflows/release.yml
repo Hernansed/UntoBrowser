@@ -28,11 +28,15 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: npx electron-builder --win nsis --publish never
 
-      - name: Build Linux .sh installer
+      - name: Build Linux packages (deb + rpm)
+        if: matrix.os == 'ubuntu-latest'
+        run: npx electron-builder --linux deb rpm --publish never
+
+      - name: Stable download names (latest)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          npx electron-builder --linux dir --publish never
-          node scripts/make-sh-installer.js
+          cp dist/unto-browser_*_amd64.deb dist/unto-browser-latest.deb
+          cp dist/unto-browser-*.x86_64.rpm dist/unto-browser-latest.rpm
 
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -40,5 +44,6 @@ jobs:
         with:
           files: |
             dist/*.exe
-            dist/Unto-Browser-*.sh
+            dist/*.deb
+            dist/*.rpm
           generate_release_notes: true
