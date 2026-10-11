@@ -55,22 +55,33 @@ body { display: flex; flex-direction: column; }
 #toolbar button:hover { background: var(--card); color: var(--text); border-color: var(--border); }
 #toolbar button:disabled { opacity: .3; cursor: default; background: transparent; border-color: transparent; }
 
-#urlbar {
+#urlbarwrap {
   flex: 1;
-  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
   margin: 0 4px;
-  padding: 0 14px;
+  padding: 0 6px 0 10px;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--urlbar-bg);
+  transition: border-color .15s, box-shadow .15s;
+}
+#urlbarwrap:focus-within { border-color: var(--accent); box-shadow: 0 0 12px var(--glow); }
+#padlock { width: 14px; height: 14px; flex: none; color: var(--muted); }
+#urlbar {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
   font-size: 13px;
   color: var(--text);
   outline: none;
   user-select: text;
-  transition: border-color .15s, box-shadow .15s;
 }
-#urlbar:focus { border-color: var(--accent); box-shadow: 0 0 12px var(--glow); }
 #urlbar::placeholder { color: var(--muted); }
+#btn-bookmark { width: 28px; height: 28px; }
 
 /* ---------- tab strip ---------- */
 #tabstrip {
