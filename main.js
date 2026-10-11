@@ -165,6 +165,69 @@ const STATE_FILE = path.join(USER_DATA_DIR, 'window-state.json');
 ipcMain.handle('state:get', () => readJson(STATE_FILE, {}));
 ipcMain.handle('state:set', (_e, s) => { writeJson(STATE_FILE, s); return true; });
 
+// App settings + network (proxy / DNT / HTTPS-Only) + session restore -------
+const SETTINGS_FILE = path.join(USER_DATA_DIR, 'settings.json');
+const SESSION_FILE = path.join(USER_DATA_DIR, 'session.json');
+let appSettings = readJson(SETTINGS_FILE, {});
+
+const isLocalHost = (u) => {
+  try {
+    const h = new URL(u).hostname;
+    return /^(localhost|127\.|10\.|192\.168\.|\[::1\]|172\.(1[6-9]|2\d|3[01])\.)/.test(h) || h.endsWith('.local');
+  } catch { return true; }
+};
+
+function buildProxyConfig(p) {
+  if (!p || p.mode === 'system') return { mode: 'system' };
+  if (p.mode === 'direct') return { mode: 'direct' };
+  const host = (p.host || '').trim(), port = (p.port || '').trim();
+  if (!host || !port) return { mode: 'system' };
+  const rules = p.type === 'socks5'
+    ? `socks5=${host}:${port}`
+    : `http=${host}:${port};https=${host}:${port}`;
+  return { mode: 'fixed_servers', proxyRules: rules, proxyBypassRules: p.bypass || '<local>' };
+}
+
+const hookedSessions = new WeakSet();
+function hookSession(ses) {
+  if (!ses || hookedSessions.has(ses)) return;
+  hookedSessions.add(ses);
+  ses.setProxy(buildProxyConfig(appSettings.proxy));
+  // DNT / Global Privacy Control headers
+  ses.webRequest.onBeforeSendHeaders({ urls: ['*://*/*'] }, (details, cb) => {
+    if (appSettings.dnt || appSettings.gpc) {
+      const h = details.requestHeaders;
+      if (appSettings.dnt) h['DNT'] = '1';
+      if (appSettings.gpc) h['Sec-GPC'] = '1';
+      cb({ requestHeaders: h });
+    } else cb({});
+  });
+  // HTTPS-Only mode: upgrade plain http to https (never for local hosts)
+  ses.webRequest.onBeforeRequest({ urls: ['http://*/*'] }, (details, cb) => {
+    if (appSettings.httpsOnly && /^http:/i.test(details.url) && !isLocalHost(details.url)) {
+      cb({ redirectURL: 'https://' + details.url.slice(7) });
+    } else cb({});
+  });
+  // Downloads: ask where to save (default dialog) vs auto-save to Downloads
+  ses.on('will-download', (_e, item) => {
+    if (appSettings.askDownloadPath === false) {
+      item.setSavePath(path.join(app.getPath('downloads'), item.getFilename()));
+    }
+  });
+}
+
+app.on('session-created', hookSession);
+
+ipcMain.handle('settings:get', () => appSettings);
+ipcMain.handle('settings:set', (_e, patch) => {
+  Object.assign(appSettings, patch || {});
+  writeJson(SETTINGS_FILE, appSettings);
+  hookSession(session.defaultSession);
+  return true;
+});
+ipcMain.handle('session:save', (_e, data) => { writeJson(SESSION_FILE, data || {}); return true; });
+ipcMain.handle('session:get', () => readJson(SESSION_FILE, {}));
+
 // Private mode: per-tab in-memory session partition ------------------------
 ipcMain.handle('private:partition', () => 'private-' + Date.now());
 

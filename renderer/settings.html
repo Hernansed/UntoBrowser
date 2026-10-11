@@ -13,229 +13,394 @@
 body{
   min-height:100vh;font:14px/1.5 system-ui,sans-serif;color:var(--text);
   background:radial-gradient(900px 400px at 50% -10%, var(--bg2), var(--bg));
-  padding:48px 20px 60px;user-select:none;
+  user-select:none;
 }
-.wrap{width:min(680px,94vw);margin:0 auto}
-h1{font-size:26px;letter-spacing:-.3px;margin-bottom:4px}
-h1 span{color:var(--accent)}
-.sub{color:var(--muted);font-size:13px;margin-bottom:28px}
-section{
-  background:var(--card);border:1px solid var(--border);border-radius:14px;
-  padding:18px 20px;margin-bottom:16px;
+.layout{display:flex;min-height:100vh;max-width:1060px;margin:0 auto}
+/* ---- sidebar ---- */
+nav{
+  width:220px;flex:none;padding:28px 0 28px 18px;
+  border-right:1px solid var(--border);
 }
-section h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:14px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0}
+nav .logo{font-size:20px;font-weight:700;letter-spacing:-.3px;padding:0 14px 20px}
+nav .logo span{color:var(--accent)}
+nav button{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  border:none;background:none;color:var(--muted);font-size:13.5px;
+  padding:9px 14px;border-radius:9px;cursor:pointer;transition:all .12s;
+}
+nav button:hover{background:var(--card);color:var(--text)}
+nav button.on{background:var(--card2);color:var(--text);box-shadow:inset 2px 0 0 var(--accent)}
+nav button .ic{width:18px;text-align:center}
+/* ---- content ---- */
+main{flex:1;padding:28px 26px 60px;min-width:0}
+h1{font-size:22px;letter-spacing:-.3px;margin-bottom:2px}
+.sub{color:var(--muted);font-size:12.5px;margin-bottom:22px}
+section{display:none}
+section.on{display:block}
+section h2{font-size:16px;margin-bottom:4px}
+section .desc{color:var(--muted);font-size:12.5px;margin-bottom:16px}
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:13px;
+  padding:4px 18px;margin-bottom:16px;
+}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0}
 .row+.row{border-top:1px solid var(--border)}
-.row label{font-size:14px}
+.row label{font-size:13.5px}
 .row small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
-select,input[type=text],input[type=password],input[type=url]{
+.row>div{min-width:0}
+select,input[type=text],input[type=password],input[type=url],input[type=number]{
   background:var(--card2);color:var(--text);border:1px solid var(--border);
-  border-radius:9px;padding:9px 12px;font-size:13.5px;outline:none;min-width:230px;
+  border-radius:9px;padding:8px 12px;font-size:13px;outline:none;max-width:280px;width:100%;
 }
 select:focus,input:focus{border-color:var(--accent)}
-input[type=checkbox]{accent-color:var(--accent);width:17px;height:17px}
+input[type=checkbox]{accent-color:var(--accent);width:17px;height:17px;flex:none}
 input[type=color]{width:44px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card2);padding:3px}
 .btn{
   background:var(--accent);color:#fff;border:none;border-radius:10px;
-  padding:10px 18px;font-size:13.5px;cursor:pointer;transition:filter .15s;
+  padding:9px 16px;font-size:13px;cursor:pointer;transition:filter .15s;
 }
 .btn:hover{filter:brightness(1.15)}
 .btn.ghost{background:var(--card2);color:var(--text);border:1px solid var(--border)}
 .btn.danger{background:#8a1f33}
-.saved{color:var(--accent2);font-size:12.5px;opacity:0;transition:opacity .3s}
-.saved.show{opacity:1}
-.themes{display:flex;gap:8px;flex-wrap:wrap}
+.btn:disabled{opacity:.45;cursor:default}
+#savedMsg{position:fixed;bottom:18px;right:20px;color:var(--accent2);font-size:12.5px;opacity:0;transition:opacity .3s}
+#savedMsg.show{opacity:1}
+/* theme grid */
+.themegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 0}
 .tchip{
-  border:2px solid var(--border);background:var(--card2);color:var(--muted);
-  border-radius:9px;padding:8px 14px;font-size:12.5px;cursor:pointer;transition:all .15s;
+  border:2px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;
+  cursor:pointer;transition:all .15s;text-align:left;min-height:44px;
 }
-.tchip:hover{color:var(--text);transform:translateY(-1px)}
-.tchip.on{border-color:var(--accent);color:var(--text);box-shadow:0 4px 12px var(--glow)}
-.back{color:var(--muted);font-size:12.5px;text-decoration:none;display:inline-block;margin-bottom:22px}
-.back:hover{color:var(--text)}
+.tchip:hover{transform:translateY(-1px)}
+.tchip.on{border-color:var(--accent);box-shadow:0 3px 12px var(--glow)}
+.tchip .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+/* proxy */
+.proxyfields{padding:10px 0 12px;border-top:1px solid var(--border)}
+.proxyfields .grid2{display:grid;grid-template-columns:1fr 110px;gap:10px;margin-bottom:10px}
+.radio{display:flex;align-items:center;gap:9px;padding:8px 0;cursor:pointer}
+.radio input{accent-color:var(--accent)}
+.radio small{color:var(--muted)}
+a{color:var(--accent2);text-decoration:none}
+a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <a class="back" href="unto://app/unto.html">← Back to start page</a>
-  <h1>Un<span>to</span> Settings</h1>
-  <div class="sub" id="verLine">Unto Browser · Chromium engine · all data stays on your device</div>
+<div class="layout">
+  <nav>
+    <div class="logo">Un<span>to</span></div>
+    <button data-s="general" class="on"><span class="ic">⚙</span>General</button>
+    <button data-s="search"><span class="ic">🔍</span>Search</button>
+    <button data-s="appearance"><span class="ic">🎨</span>Appearance</button>
+    <button data-s="privacy"><span class="ic">🛡</span>Privacy &amp; Security</button>
+    <button data-s="network"><span class="ic">🌐</span>Network</button>
+    <button data-s="ai"><span class="ic">✦</span>Unto AI</button>
+    <button data-s="updates"><span class="ic">⬆</span>Updates</button>
+    <button data-s="about"><span class="ic">ℹ</span>About</button>
+  </nav>
 
-  <section>
-    <h2>Search</h2>
-    <div class="row">
-      <label>Default search engine</label>
-      <select id="engine"></select>
-    </div>
-    <div class="row">
-      <label>Live search suggestions<small>Google suggest API while typing</small></label>
-      <input type="checkbox" id="sug" checked>
-    </div>
-  </section>
+  <main>
+    <h1>Settings</h1>
+    <div class="sub">Changes are saved automatically</div>
 
-  <section>
-    <h2>Appearance</h2>
-    <div class="row" style="flex-direction:column;align-items:flex-start;gap:10px">
-      <label>Start page theme</label>
-      <div class="themes" id="themes"></div>
-    </div>
-    <div class="row">
-      <label>Custom accent color</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="color" id="accent">
-        <button class="btn ghost" id="accentReset">Reset</button>
+    <!-- ================= GENERAL ================= -->
+    <section id="s-general" class="on">
+      <h2>General</h2>
+      <div class="desc">Startup behaviour and downloads.</div>
+      <div class="card">
+        <div class="row">
+          <div><label>On startup</label><small>What to open when the browser launches</small></div>
+          <select id="startup">
+            <option value="start">Start page</option>
+            <option value="restore">Restore previous session</option>
+          </select>
+        </div>
+        <div class="row">
+          <div><label>Ask where to save downloads</label><small>Off — files go straight to Downloads</small></div>
+          <input type="checkbox" id="askDl" checked>
+        </div>
+        <div class="row">
+          <div><label>Animations</label><small>disable on slow machines</small></div>
+          <input type="checkbox" id="anim" checked>
+        </div>
+        <div class="row">
+          <div><label>24-hour clock</label><small>start page clock format</small></div>
+          <input type="checkbox" id="h24" checked>
+        </div>
       </div>
-    </div>
-    <div class="row">
-      <label>Animations<small>disable on slow machines</small></label>
-      <input type="checkbox" id="anim" checked>
-    </div>
-    <div class="row">
-      <label>24-hour clock</label>
-      <input type="checkbox" id="h24" checked>
-    </div>
-  </section>
+    </section>
 
-  <section>
-    <h2>Privacy</h2>
-    <div class="row">
-      <label>Clear browsing data<small>cache, cookies, localStorage of visited sites</small></label>
-      <button class="btn danger" id="clearData">Clear now</button>
-    </div>
-    <div class="row">
-      <label>Clear history</label>
-      <button class="btn ghost" id="clearHist">Clear</button>
-    </div>
-  </section>
+    <!-- ================= SEARCH ================= -->
+    <section id="s-search">
+      <h2>Search</h2>
+      <div class="desc">Default search engine and address-bar behaviour.</div>
+      <div class="card">
+        <div class="row">
+          <div><label>Default search engine</label><small>used in the address bar and start page</small></div>
+          <select id="engine"></select>
+        </div>
+        <div class="row">
+          <div><label>Live search suggestions</label><small>Google suggest API while typing</small></div>
+          <input type="checkbox" id="sug" checked>
+        </div>
+      </div>
+    </section>
 
-  <section>
-    <h2>Unto AI</h2>
-    <div class="row"><label>API endpoint<small>OpenAI, OpenRouter, Groq, Ollama (http://localhost:11434/v1)</small></label>
-      <input type="url" id="aiUrl" placeholder="https://api.openai.com/v1"></div>
-    <div class="row"><label>API key<small>stored locally, never sent anywhere else</small></label>
-      <input type="password" id="aiKey" placeholder="sk-..."></div>
-    <div class="row"><label>Model</label>
-      <input type="text" id="aiModel" placeholder="gpt-4o-mini"></div>
-  </section>
+    <!-- ================= APPEARANCE ================= -->
+    <section id="s-appearance">
+      <h2>Appearance</h2>
+      <div class="desc">24 themes across the spectrum, plus a custom accent.</div>
+      <div class="card">
+        <div class="themegrid" id="themes"></div>
+        <div class="row" style="border-top:1px solid var(--border)">
+          <div><label>Custom accent color</label><small>overrides the theme accent</small></div>
+          <span style="display:flex;gap:8px;align-items:center">
+            <input type="color" id="accent">
+            <button class="btn ghost" id="accentReset">Reset</button>
+          </span>
+        </div>
+      </div>
+    </section>
 
-  <section>
-    <h2>Updates</h2>
-    <div class="row">
-      <label id="updLabel">Checking for updates…<small id="updSub"></small></label>
-      <span style="display:flex;gap:8px;align-items:center">
-        <button class="btn ghost" id="updCheck">Check for updates</button>
-        <button class="btn" id="updInstall" style="display:none">Download &amp; install</button>
-      </span>
-    </div>
-  </section>
+    <!-- ================= PRIVACY ================= -->
+    <section id="s-privacy">
+      <h2>Privacy &amp; Security</h2>
+      <div class="desc">Tracking signals and browsing data.</div>
+      <div class="card">
+        <div class="row">
+          <div><label>Do Not Track</label><small>sends the DNT header to every site</small></div>
+          <input type="checkbox" id="dnt">
+        </div>
+        <div class="row">
+          <div><label>Global Privacy Control</label><small>sends Sec-GPC “do not sell/share” signal</small></div>
+          <input type="checkbox" id="gpc">
+        </div>
+        <div class="row">
+          <div><label>HTTPS-Only mode</label><small>upgrades plain http:// to https:// (local addresses excluded)</small></div>
+          <input type="checkbox" id="httpsOnly">
+        </div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <div><label>Clear browsing data</label><small>cache, cookies, localStorage of visited sites</small></div>
+          <button class="btn danger" id="clearData">Clear now</button>
+        </div>
+        <div class="row">
+          <div><label>Clear history</label><small>removes all recorded visits</small></div>
+          <button class="btn ghost" id="clearHist">Clear</button>
+        </div>
+      </div>
+    </section>
 
-  <div style="display:flex;align-items:center;gap:14px">
-    <button class="btn" id="save">Save settings</button>
-    <span class="saved" id="savedMsg">Saved ✓</span>
-  </div>
+    <!-- ================= NETWORK ================= -->
+    <section id="s-network">
+      <h2>Network</h2>
+      <div class="desc">Proxy settings apply after restarting Unto.</div>
+      <div class="card">
+        <div class="radio"><input type="radio" name="pmode" id="pm-system" value="system" checked>
+          <div><label for="pm-system">Use system proxy settings</label><small>follow OS configuration (default)</small></div></div>
+        <div class="radio"><input type="radio" name="pmode" id="pm-direct" value="direct">
+          <div><label for="pm-direct">No proxy</label><small>direct connection, ignores system proxy</small></div></div>
+        <div class="radio"><input type="radio" name="pmode" id="pm-manual" value="manual">
+          <div><label for="pm-manual">Manual proxy configuration</label></div></div>
+        <div class="proxyfields" id="proxyFields" style="display:none">
+          <div class="grid2">
+            <input type="text" id="pxHost" placeholder="Proxy host, e.g. 127.0.0.1">
+            <input type="number" id="pxPort" placeholder="Port" min="1" max="65535">
+          </div>
+          <div class="row" style="padding:4px 0">
+            <div><label>Protocol</label></div>
+            <select id="pxType" style="max-width:140px">
+              <option value="http">HTTP/HTTPS</option>
+              <option value="socks5">SOCKS5</option>
+            </select>
+          </div>
+          <div class="row" style="padding:4px 0">
+            <div><label>Bypass list</label><small>comma-separated hosts that skip the proxy</small></div>
+            <input type="text" id="pxBypass" placeholder="&lt;local&gt;, *.internal.com">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= AI ================= -->
+    <section id="s-ai">
+      <h2>Unto AI</h2>
+      <div class="desc">Any OpenAI-compatible endpoint; the key never leaves this device.</div>
+      <div class="card">
+        <div class="row"><div><label>API endpoint</label><small>OpenAI, OpenRouter, Groq, Ollama (http://localhost:11434/v1)</small></div>
+          <input type="url" id="aiUrl" placeholder="https://api.openai.com/v1"></div>
+        <div class="row"><div><label>API key</label><small>stored locally, sent only to the endpoint above</small></div>
+          <input type="password" id="aiKey" placeholder="sk-..."></div>
+        <div class="row"><div><label>Model</label></div>
+          <input type="text" id="aiModel" placeholder="gpt-4o-mini"></div>
+      </div>
+    </section>
+
+    <!-- ================= UPDATES ================= -->
+    <section id="s-updates">
+      <h2>Updates</h2>
+      <div class="desc">Unto checks GitHub Releases for new versions.</div>
+      <div class="card">
+        <div class="row">
+          <div><label id="updLabel">Checking for updates…</label><small id="updSub"></small></div>
+          <span style="display:flex;gap:8px;align-items:center">
+            <button class="btn ghost" id="updCheck">Check for updates</button>
+            <button class="btn" id="updInstall" style="display:none">Download &amp; install</button>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ABOUT ================= -->
+    <section id="s-about">
+      <h2>About</h2>
+      <div class="desc">Unto Browser — a full cross-platform Chromium-based browser.</div>
+      <div class="card">
+        <div class="row"><div><label>Version</label></div><span id="aboutVer">…</span></div>
+        <div class="row"><div><label>Engine</label></div><span>Chromium (Electron)</span></div>
+        <div class="row"><div><label>Source code</label></div><a href="https://github.com/Hernansed/UntoBrowser" target="_blank">github.com/Hernansed/UntoBrowser</a></div>
+      </div>
+    </section>
+  </main>
 </div>
+<span id="savedMsg">Saved ✓</span>
 
 <script>
+const $ = s => document.querySelector(s);
 const LS = {
   get(k,d){ try{ const v=localStorage.getItem('unto.'+k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
   set(k,v){ localStorage.setItem('unto.'+k, JSON.stringify(v)); }
 };
-const $ = s => document.querySelector(s);
-if (window.unto && window.unto.update) {
-  window.unto.update.check().then(r => {
-    if (r && r.ok) $('#verLine').textContent = 'Unto Browser ' + r.current + ' · Chromium engine · all data stays on your device';
-  }).catch(()=>{});
-}
+const hasAPI = !!(window.unto && window.unto.settings);
 
+/* ---- sidebar navigation ---- */
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('main section').forEach(s=>s.classList.toggle('on', s.id==='s-'+b.dataset.s));
+});
+
+/* ---- engines ---- */
 const ENGINES = {
   google:'Google', ddg:'DuckDuckGo', perplexity:'Perplexity', bing:'Bing', brave:'Brave',
   ecosia:'Ecosia', startpage:'Startpage', mojeek:'Mojeek', youtube:'YouTube',
   github:'GitHub', wikipedia:'Wikipedia', reddit:'Reddit', amazon:'Amazon', maps:'Maps', images:'Images',
 };
-const THEMES = ['noir','ocean','snow','graphite','midnight'];
-
-// populate engines
 $('#engine').innerHTML = Object.entries(ENGINES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
-$('#engine').value = LS.get('engine','google');
 
-// themes
-const cur = LS.get('theme','noir');
-$('#themes').innerHTML = THEMES.map(t=>`<button class="tchip ${t===cur?'on':''}" data-t="${t}">${t}</button>`).join('');
-$('#themes').querySelectorAll('.tchip').forEach(b=>b.onclick=()=>{
-  LS.set('theme',b.dataset.t);
+/* ---- themes (must match unto.html THEME_DEFS) ---- */
+const THEME_LIST = [
+  ['noir','#2f6fed'],['midnight','#3b82f6'],['ocean','#0ea5c9'],['deepsea','#14b8a6'],
+  ['teal','#10b981'],['forest','#4d9e2f'],['lime','#84cc16'],['amber','#f59e0b'],
+  ['sunset','#f97316'],['crimson','#e11d48'],['rose','#ec4899'],['grape','#9333ea'],
+  ['violet','#7c3aed'],['indigo','#4f46e5'],['azure','#0284c7'],['steel','#64748b'],
+  ['coffee','#a1662f'],['sand','#b4832a'],['snow','#2456d6'],['sakura','#db2777'],
+  ['mint','#0d9488'],['paper','#c2410c'],['cyber','#22ff88'],['gold','#d4af37'],
+];
+const curT = LS.get('theme','noir');
+$('#themes').innerHTML = THEME_LIST.map(([t,c]) =>
+  `<button class="tchip ${t===curT?'on':''}" data-t="${t}" style="background:var(--card2);color:var(--text)"><span class="dot" style="background:${c}"></span>${t}</button>`).join('');
+$('#themes').querySelectorAll('.tchip').forEach(b => b.onclick = () => {
+  LS.set('theme', b.dataset.t);
   $('#themes').querySelectorAll('.tchip').forEach(x=>x.classList.toggle('on',x===b));
+  $('#accent').value = '#2f6fed';
+  toast();
 });
 
-// load current values
-const ai = LS.get('ai',{});
-$('#aiUrl').value = ai.url||''; $('#aiKey').value = ai.key||''; $('#aiModel').value = ai.model||'';
-$('#anim').checked = LS.get('anim','1')==='1';
-$('#h24').checked = LS.get('h24', true);
-$('#sug').checked = LS.get('suggestions', true);
-if(LS.get('accent',null)) $('#accent').value = LS.get('accent',null);
-
-$('#accentReset').onclick = ()=>{ LS.set('accent',null); $('#accent').value='#2f6fed'; };
-$('#clearHist').onclick = async ()=>{
-  if (window.unto && window.unto.history) { await window.unto.history.clear(); flash(); }
-  else { localStorage.setItem('unto.histCleared','1'); flash(); }
+/* ---- settings state ---- */
+let S = {
+  startup:'start', askDownloadPath:true, dnt:false, gpc:false, httpsOnly:false,
+  proxy:{ mode:'system', type:'http', host:'', port:'', bypass:'<local>' },
 };
-$('#clearData').onclick = async ()=>{
-  if (window.unto && window.unto.privacy) { await window.unto.privacy.clearBrowsing(); flash(); }
-  else flash();
-};
-$('#save').onclick = ()=>{
-  LS.set('engine', $('#engine').value);
-  LS.set('suggestions', $('#sug').checked);
-  LS.set('anim', $('#anim').checked?'1':'0');
-  LS.set('h24', $('#h24').checked);
-  LS.set('accent', $('#accent').value || null);
-  LS.set('ai', { url:$('#aiUrl').value.trim(), key:$('#aiKey').value.trim(), model:$('#aiModel').value.trim() });
-  flash();
-};
-function flash(){ const m=$('#savedMsg'); m.classList.add('show'); setTimeout(()=>m.classList.remove('show'),1500); }
+(async () => {
+  if (hasAPI) S = Object.assign(S, await window.unto.settings.get());
+  // hydrate
+  $('#startup').value = S.startup || 'start';
+  $('#askDl').checked = S.askDownloadPath !== false;
+  $('#dnt').checked = !!S.dnt; $('#gpc').checked = !!S.gpc; $('#httpsOnly').checked = !!S.httpsOnly;
+  $('#engine').value = LS.get('engine','google');
+  $('#sug').checked = LS.get('suggestions', true);
+  $('#anim').checked = LS.get('anim','1')==='1';
+  $('#h24').checked = LS.get('h24', true);
+  const p = S.proxy || {};
+  const mode = p.mode === 'direct' ? 'direct' : (p.mode === 'fixed_servers' ? 'manual' : 'system');
+  ({system:$('#pm-system'),direct:$('#pm-direct'),manual:$('#pm-manual')})[mode].checked = true;
+  $('#pxHost').value = p.host||''; $('#pxPort').value = p.port||'';
+  $('#pxType').value = p.type==='socks5'?'socks5':'http';
+  $('#pxBypass').value = p.bypass || '<local>';
+  $('#proxyFields').style.display = mode==='manual' ? '' : 'none';
+  const ai = LS.get('ai',{});
+  $('#aiUrl').value = ai.url||''; $('#aiKey').value = ai.key||''; $('#aiModel').value = ai.model||'';
+  if (window.unto && window.unto.update) {
+    const r = await window.unto.update.check().catch(()=>null);
+    if (r && r.ok) { $('#aboutVer').textContent = 'v' + r.current; }
+  }
+})();
 
-// ---- updates ---------------------------------------------------------------
-const updLabel = $('#updLabel'), updSub = $('#updSub');
-const updInstall = $('#updInstall');
-function updSay(main, sub){ updLabel.childNodes[0].nodeValue = main; updSub.textContent = sub || ''; }
+/* ---- auto-save ---- */
+let tId=null;
+function toast(){ const m=$('#savedMsg'); m.classList.add('show'); clearTimeout(tId); tId=setTimeout(()=>m.classList.remove('show'),1300); }
+function collect(){
+  const mode = document.querySelector('input[name=pmode]:checked').value;
+  return {
+    startup: $('#startup').value,
+    askDownloadPath: $('#askDl').checked,
+    dnt: $('#dnt').checked, gpc: $('#gpc').checked, httpsOnly: $('#httpsOnly').checked,
+    proxy: mode==='manual'
+      ? { mode:'fixed_servers', type:$('#pxType').value, host:$('#pxHost').value.trim(), port:String($('#pxPort').value.trim()), bypass:$('#pxBypass').value.trim()||'<local>' }
+      : { mode, type:'http', host:'', port:'', bypass:'<local>' },
+  };
+}
+function save(patch){
+  Object.assign(S, patch);
+  if (hasAPI) window.unto.settings.set(patch);
+  toast();
+}
+const bind = (id, key, ev='change') => $(id).addEventListener(ev, e => save({ [key]: e.target.type==='checkbox' ? e.target.checked : e.target.value }));
+bind('#startup','startup'); bind('#askDl','askDownloadPath');
+bind('#dnt','dnt'); bind('#gpc','gpc'); bind('#httpsOnly','httpsOnly');
+$('#engine').onchange = e => { LS.set('engine', e.target.value); toast(); };
+$('#sug').onchange = e => { LS.set('suggestions', e.target.checked); toast(); };
+$('#anim').onchange = e => { LS.set('anim', e.target.checked?'1':'0'); toast(); };
+$('#h24').onchange = e => { LS.set('h24', e.target.checked); toast(); };
+$('#aiUrl').onchange = $('#aiKey').onchange = $('#aiModel').onchange = () => {
+  LS.set('ai', { url:$('#aiUrl').value.trim(), key:$('#aiKey').value.trim(), model:$('#aiModel').value.trim() }); toast();
+};
+$('#accentReset').onclick = () => { LS.set('accent', null); $('#accent').value='#2f6fed'; toast(); };
+document.querySelectorAll('input[name=pmode]').forEach(r => r.onchange = () => {
+  const mode = document.querySelector('input[name=pmode]:checked').value;
+  $('#proxyFields').style.display = mode==='manual' ? '' : 'none';
+  save(collect());
+});
+['#pxHost','#pxPort','#pxType','#pxBypass'].forEach(id => $(id).addEventListener('change', () => save(collect())));
 
-async function checkUpdates(silent){
-  updSay('Checking for updates…');
-  updInstall.style.display = 'none';
-  try {
-    const r = await window.unto.update.check();
-    if (!r.ok) { updSay('Update check failed', r.error || ''); return; }
-    if (r.updateAvailable) {
-      updSay('Update available: v' + r.latest, 'you have v' + r.current + ' — click to download & install');
-      updInstall.style.display = '';
-    } else {
-      updSay('Unto is up to date', 'version ' + r.current);
-      if (!silent) updSub.textContent = 'version ' + r.current;
-    }
-  } catch (e) {
-    updSay('Update check failed', String(e && e.message || e));
+/* ---- data clearing ---- */
+$('#clearHist').onclick = async () => { if (window.unto?.history) await window.unto.history.clear(); toast(); };
+$('#clearData').onclick = async () => { if (window.unto?.privacy) await window.unto.privacy.clearBrowsing(); toast(); };
+
+/* ---- updates ---- */
+const updLabel = $('#updLabel'), updSub = $('#updSub'), updInstall = $('#updInstall');
+async function checkUpdates(){
+  updLabel.textContent='Checking for updates…'; updSub.textContent=''; updInstall.style.display='none';
+  if (!(window.unto && window.unto.update)) { updLabel.textContent='Updates unavailable here'; return; }
+  const r = await window.unto.update.check().catch(e=>({ok:false,error:String(e)}));
+  if (!r.ok) { updLabel.textContent='Update check failed'; updSub.textContent=r.error||''; return; }
+  if (r.updateAvailable) {
+    updLabel.textContent='Update available: v'+r.latest;
+    updSub.textContent='you have v'+r.current;
+    updInstall.style.display='';
+  } else {
+    updLabel.textContent='Unto is up to date'; updSub.textContent='version '+r.current;
   }
 }
-
 updInstall.onclick = async () => {
-  updInstall.disabled = true;
-  updSay('Downloading update…', 'this may take a minute');
-  try {
-    const r = await window.unto.update.install();
-    if (r.ok) {
-      updSay('Update downloaded — installing…', 'the installer will replace the app; restart Unto when it finishes');
-    } else if (r.error === 'already-up-to-date') {
-      updSay('Unto is up to date');
-    } else {
-      updSay('Update failed', r.error || '');
-    }
-  } catch (e) {
-    updSay('Update failed', String(e && e.message || e));
-  }
-  updInstall.disabled = false;
+  updInstall.disabled=true; updLabel.textContent='Downloading update…';
+  const r = await window.unto.update.install().catch(e=>({ok:false,error:String(e)}));
+  if (r.ok) { updLabel.textContent='Update downloaded — installing…'; updSub.textContent='restart Unto when the installer finishes'; }
+  else { updLabel.textContent='Update failed'; updSub.textContent=r.error||''; }
+  updInstall.disabled=false;
 };
-$('#updCheck').onclick = () => checkUpdates(false);
-checkUpdates(true);
+$('#updCheck').onclick = checkUpdates;
+checkUpdates();
 </script>
 </body>
 </html>

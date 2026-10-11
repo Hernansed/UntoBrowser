@@ -25,6 +25,14 @@ contextBridge.exposeInMainWorld('unto', {
   private: {
     newPartition: () => ipcRenderer.invoke('private:partition'),
   },
+  settings: {
+    get: () => ipcRenderer.invoke('settings:get'),
+    set: (patch) => ipcRenderer.invoke('settings:set', patch),
+  },
+  session: {
+    save: (data) => ipcRenderer.invoke('session:save', data),
+    get: () => ipcRenderer.invoke('session:get'),
+  },
   downloads: {
     open: (path) => ipcRenderer.invoke('downloads:open', path),
   },

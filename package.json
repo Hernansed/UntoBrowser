@@ -1,7 +1,7 @@
 {
   "name": "unto-browser",
   "productName": "Unto Browser",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "Unto — a full cross-platform (Windows/Linux) Chromium-based browser with the Unto start page.",
   "main": "main.js",
   "author": "you",
