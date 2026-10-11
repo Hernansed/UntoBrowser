@@ -39,16 +39,19 @@ body { display: flex; flex-direction: column; }
 }
 
 #toolbar button {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  font-size: 15px;
   cursor: pointer;
   color: var(--muted);
   transition: all .15s;
 }
+#toolbar button svg { width: 17px; height: 17px; display: block; }
 #toolbar button:hover { background: var(--card); color: var(--text); border-color: var(--border); }
 #toolbar button:disabled { opacity: .3; cursor: default; background: transparent; border-color: transparent; }
 
@@ -122,10 +125,11 @@ body { display: flex; flex-direction: column; }
   width: 26px;
   height: 26px;
   border-radius: 8px;
-  font-size: 16px;
   cursor: pointer;
   color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center;
 }
+#btn-newtab svg { width: 14px; height: 14px; }
 #btn-newtab:hover { background: var(--card); color: var(--text); border-color: var(--border); }
 
 /* ---------- content ---------- */
@@ -225,7 +229,9 @@ iframe.untoframe {
   flex-direction: column;
 }
 #menu.hidden { display: none; }
+#menu hr { border: none; border-top: 1px solid var(--border); margin: 5px 0; }
 #menu button {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
   text-align: left;
   border: none;
   background: transparent;
@@ -235,7 +241,13 @@ iframe.untoframe {
   font-size: 13px;
   color: var(--text);
 }
+#menu button .kbd {
+  font-size: 11px; color: var(--muted);
+  background: var(--card2); border: 1px solid var(--border); border-radius: 5px;
+  padding: 1.5px 7px;
+}
 #menu button:hover { background: var(--card2); }
+#menu button:hover .kbd { color: var(--text); }
 
 /* scrollbars in chrome */
 ::-webkit-scrollbar { width: 10px; height: 10px; }

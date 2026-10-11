@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Downloads — Unto Browser</title>
+<style>
+:root{--bg:#05070d;--bg2:#0a0f1c;--card:#0e1526;--card2:#131c33;--text:#eef2fb;--muted:#8ea0c4;--border:#1d2946;--accent:#2f6fed;--accent2:#5a8bff}
+*{box-sizing:border-box;margin:0}
+body{min-height:100vh;font:14px/1.5 system-ui,sans-serif;color:var(--text);background:radial-gradient(900px 400px at 50% -10%, var(--bg2), var(--bg));padding:48px 20px}
+.wrap{width:min(720px,94vw);margin:0 auto}
+h1{font-size:24px;margin-bottom:4px}h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:13px;margin-bottom:24px}
+.item{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:12px 16px;margin-bottom:8px;transition:border-color .15s}
+.item:hover{border-color:var(--accent)}
+.ic{width:34px;height:34px;flex:none;border-radius:9px;background:var(--card2);display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.ic svg{width:17px;height:17px}
+.mid{flex:1;min-width:0}
+.nm{font-size:13.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta{font-size:12px;color:var(--muted);margin-top:2px}
+.bar{height:4px;border-radius:2px;background:var(--card2);overflow:hidden;margin-top:7px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:2px;transition:width .25s}
+.acts{display:flex;gap:8px;flex:none}
+.acts button{background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer}
+.acts button:hover{border-color:var(--accent)}
+.state-done{color:#58d68d}.state-fail{color:#e0405a}
+.empty{color:var(--muted);text-align:center;padding:60px 0}
+button.cl{background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:8px 16px;font-size:12.5px;cursor:pointer;margin-bottom:18px}
+button.cl:hover{border-color:#e0405a;color:#ff8ba0}
+a.back{color:var(--muted);font-size:12.5px;text-decoration:none;display:inline-block;margin-bottom:20px}
+a.back:hover{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="unto://app/unto.html">← Back</a>
+  <h1>Down<span>loads</span></h1>
+  <div class="sub">Files you download appear here · Ctrl+J opens the quick panel</div>
+  <button class="cl" id="clear">Clear list</button>
+  <div id="list"></div>
+  <div id="empty" class="empty" style="display:none">No downloads yet — something you save from the web will show up here.</div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+function fmt(n){ if(!n||n<0) return ''; const u=['B','KB','MB','GB']; let i=0,v=n; while(v>=1024&&i<u.length-1){v/=1024;i++;} return (i?v.toFixed(1):v)+' '+u[i]; }
+
+let items=[];
+function render(){
+  const list=$('#list');
+  $('#empty').style.display=items.length?'none':'';
+  list.innerHTML='';
+  for(const d of items){
+    const row=document.createElement('div'); row.className='item';
+    const ic=document.createElement('div'); ic.className='ic';
+    ic.innerHTML='<svg viewBox="0 0 24 24"><path d="M12 4v10m0 0 4-4m-4 4-4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const mid=document.createElement('div'); mid.className='mid';
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=d.name||'file';
+    const meta=document.createElement('div'); meta.className='meta';
+    const pct=d.total?Math.round(d.received/d.total*100):0;
+    if(d.state==='completed'){ meta.innerHTML='<span class="state-done">Completed</span> · '+fmt(d.total); }
+    else if(d.state==='cancelled'){ meta.innerHTML='<span class="state-fail">Cancelled</span>'; }
+    else if(d.state==='interrupted'){ meta.innerHTML='<span class="state-fail">Failed</span>'; }
+    else if(d.state==='progressing'){ meta.textContent=pct+'% of '+fmt(d.total); }
+    else meta.textContent='Starting…';
+    mid.append(nm,meta);
+    row.append(ic,mid);
+    if(d.state==='progressing'||d.state==='starting'){
+      const bar=document.createElement('div'); bar.className='bar';
+      const f=document.createElement('i'); f.style.width=pct+'%'; bar.appendChild(f);
+      mid.appendChild(bar);
+    }
+    if(d.state==='completed'&&d.file){
+      const acts=document.createElement('div'); acts.className='acts';
+      const open=document.createElement('button'); open.textContent='Open';
+      open.onclick=()=>window.unto.downloads.openSaved(d.file);
+      const show=document.createElement('button'); show.textContent='Show in folder';
+      show.onclick=()=>window.unto.downloads.showInFolder(d.file);
+      acts.append(open,show); row.appendChild(acts);
+    }
+    list.appendChild(row);
+  }
+}
+window.unto.downloads.list().then(l=>{items=l||[];render();});
+if(window.unto.downloads.onUpdate) window.unto.downloads.onUpdate(l=>{items=l||[];render();});
+$('#clear').onclick=()=>window.unto.downloads.clear().then(()=>{items=[];render();});
+</script>
+</body>
+</html>

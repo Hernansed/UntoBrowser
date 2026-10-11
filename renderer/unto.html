@@ -30,6 +30,22 @@ body{
   transition:transform .15s, color .15s, border-color .15s;
 }
 .iconbtn:hover{ color:var(--text); border-color:var(--accent); transform:translateY(-2px); }
+.startmenu{
+  position:fixed; top:58px; right:16px; z-index:70; min-width:230px;
+  background:var(--card); border:1px solid var(--border); border-radius:13px;
+  box-shadow:0 18px 44px rgba(0,0,0,.5); padding:6px; display:none;
+}
+.startmenu.open{ display:block; }
+.startmenu button{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  width:100%; text-align:left; border:none; background:none; color:var(--text);
+  font-size:13.5px; padding:9px 12px; border-radius:8px; cursor:pointer;
+}
+.startmenu button:hover{ background:var(--card2); }
+.startmenu .smk{
+  font-size:11px; color:var(--muted); background:var(--card2);
+  border:1px solid var(--border); border-radius:5px; padding:1px 7px;
+}
 .clock{ position:fixed; top:18px; left:20px; font-size:13px; color:var(--muted); letter-spacing:.5px; }
 
 /* ============ search ============ */
@@ -260,11 +276,15 @@ document.documentElement.dataset.theme = THEME_DEFS[savedT] ? savedT : (legacy[s
 <div class="clock fade d1" id="clock"></div>
 
 <div class="top fade d1">
-  <button class="iconbtn" id="btnPw" title="Passwords">🔒</button>
-  <button class="iconbtn" id="btnHist" title="History">🕘</button>
-  <button class="iconbtn" id="btnAI" title="Unto AI (A)">✦</button>
-  <button class="iconbtn" id="btnTheme" title="Themes (T)">◐</button>
-  <button class="iconbtn" id="btnSet" title="Settings">⚙️</button>
+  <button class="iconbtn" id="btnMenu" title="Menu"><svg viewBox="0 0 24 24" style="width:18px;height:18px;display:block"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+</div>
+<div class="startmenu" id="startmenu">
+  <button data-m="theme">🎨 Themes<span class="smk">T</span></button>
+  <button data-m="ai">✦ Unto AI<span class="smk">A</span></button>
+  <button data-m="pw">🔒 Passwords</button>
+  <button data-m="hist">🕘 History</button>
+  <button data-m="dl">⤓ Downloads</button>
+  <button data-m="set">⚙ Settings</button>
 </div>
 
 <h1 class="fade d1">Un<span>to</span></h1>
@@ -636,6 +656,20 @@ function togglePanel(id){
 }
 document.querySelectorAll('[data-close]').forEach(b =>
   b.onclick = () => b.closest('.panel').classList.remove('open'));
+const startmenu = $('#startmenu');
+$('#btnMenu').onclick = (e) => { e.stopPropagation(); startmenu.classList.toggle('open'); };
+document.addEventListener('click', (e) => { if(!e.target.closest('#startmenu')) startmenu.classList.remove('open'); });
+startmenu.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-m]'); if(!b) return;
+  startmenu.classList.remove('open');
+  const m = b.dataset.m;
+  if (m==='theme') togglePanel('#pTheme');
+  else if (m==='ai') togglePanel('#pAI');
+  else if (m==='pw') togglePanel('#pPw');
+  else if (m==='hist') $('#btnHist').click();
+  else if (m==='dl') go('unto://app/downloads.html');
+  else if (m==='set') go('unto://app/settings.html');
+});
 $('#btnTheme').onclick = () => togglePanel('#pTheme');
 $('#btnSet').onclick = () => togglePanel('#pSet');
 $('#btnAI').onclick = () => togglePanel('#pAI');

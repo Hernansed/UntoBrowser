@@ -18,12 +18,15 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'unto', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
 ]);
 
-// Memory: one renderer process per site (not per tab) and no GPU process.
-// Typical saving: 30–50% on a 10-tab session.
+// Memory: one renderer process per site (not per tab).
+// GPU stays ON on Windows (disabling it makes the UI sluggish and blurry there);
+// on Linux we keep the lightweight fallback for odd driver setups.
 app.commandLine.appendSwitch('renderer-process-limit', '6');
 app.commandLine.appendSwitch('process-per-site');
-app.commandLine.appendSwitch('disable-gpu');
-app.commandLine.appendSwitch('disable-software-rasterizer');
+if (process.platform !== 'win32') {
+  app.commandLine.appendSwitch('disable-gpu');
+  app.commandLine.appendSwitch('disable-software-rasterizer');
+}
 
 const USER_DATA_DIR = path.join(app.getPath('userData'), 'profile');
 const HISTORY_FILE = path.join(USER_DATA_DIR, 'history.json');
@@ -70,7 +73,7 @@ function createWindow() {
     minWidth: 640,
     minHeight: 400,
     title: 'Unto Browser',
-    backgroundColor: '#f5f6f7',
+    backgroundColor: '#05070d',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

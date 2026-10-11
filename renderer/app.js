@@ -5,6 +5,8 @@
 // how modern Electron browsers isolate tabs.
 
 const api = window.unto;
+const RELOAD_SVG = '<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const STOP_SVG = '<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block"><path d="M7 7h10v10H7z" fill="currentColor"/></svg>';
 const START_PAGE = 'unto://app/unto.html'; // bundled start page via custom protocol
 const HOME_URL = START_PAGE;
 
@@ -62,7 +64,7 @@ function createTab(url = START_PAGE, isPrivate = false) {
 
   const closeEl = document.createElement('button');
   closeEl.className = 'close';
-  closeEl.textContent = '\u2715';
+  closeEl.innerHTML = '<svg viewBox="0 0 24 24" style="width:10px;height:10px;display:block"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
   closeEl.title = 'Close tab';
   closeEl.addEventListener('click', (e) => { e.stopPropagation(); closeTab(id); });
 
@@ -98,11 +100,11 @@ function ensureWebview(tab) {
   tab.view = view;
   // ---- webview events ----
   view.addEventListener('did-start-loading', () => {
-    if (tab.id === activeId) els.reload.textContent = '\u2715';
+    if (tab.id === activeId) els.reload.innerHTML = STOP_SVG;
   });
 
   view.addEventListener('did-stop-loading', () => {
-    if (tab.id === activeId) els.reload.textContent = '\u21bb';
+    if (tab.id === activeId) els.reload.innerHTML = RELOAD_SVG;
     updateNavButtons(view);
   });
 
@@ -295,7 +297,8 @@ els.bookmark.addEventListener('click', async () => {
   const url = tab.view.getURL();
   const list = await api.bookmarks.toggle({ url, title: tab.view.getTitle() || url });
   const saved = list.some((b) => b.url === url);
-  els.bookmark.textContent = saved ? '\u2605' : '\u2606';
+  const star = document.getElementById('bm-star');
+  if (star) star.setAttribute('fill', saved ? 'currentColor' : 'none');
 });
 els.newTab.addEventListener('click', () => createTab(START_PAGE, false));
 
@@ -401,7 +404,7 @@ els.menu.addEventListener('click', async (e) => {
     case 'settings': navigateTab(tab, 'unto://app/settings.html'); break;
     case 'history': navigateTab(tab, 'unto://app/history.html'); break;
     case 'bookmarks': navigateTab(tab, 'unto://app/bookmarks.html'); break;
-    case 'downloads': toggleDlPanel(); break;
+    case 'downloads': navigateTab(tab, 'unto://app/downloads.html'); break;
     case 'zoom-in': tab?.view?.setZoomLevel(tab.view.getZoomLevel() + 0.5); break;
     case 'zoom-out': tab?.view?.setZoomLevel(tab.view.getZoomLevel() - 0.5); break;
     case 'zoom-reset': tab?.view?.setZoomLevel(0); break;
@@ -473,7 +476,7 @@ api.onOpenUrlRequest((u) => createTab(u, false));
   // silent update check at startup — subtle menu cue when a new version exists
   api.update.check().then((r) => {
     if (r && r.ok && r.updateAvailable) {
-      els.menuBtn.textContent = '\u21BB';
+      els.menuBtn.style.color = 'var(--accent2)';
       els.menuBtn.title = 'Update available: v' + r.latest + ' — open Settings';
       const btn = document.createElement('button');
       btn.textContent = 'Update to v' + r.latest;

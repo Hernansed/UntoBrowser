@@ -9,25 +9,40 @@
 </head>
 <body>
   <header id="toolbar">
-    <button id="btn-back" title="Back (Alt+Left)">&#8592;</button>
-    <button id="btn-fwd" title="Forward (Alt+Right)">&#8594;</button>
-    <button id="btn-reload" title="Reload (Ctrl+R)">&#8635;</button>
-    <button id="btn-home" title="Home">&#8962;</button>
+    <button id="btn-back" title="Back (Alt+Left)"><svg viewBox="0 0 24 24"><path d="M15.5 4.5 8 12l7.5 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button id="btn-fwd" title="Forward (Alt+Right)"><svg viewBox="0 0 24 24"><path d="M8.5 4.5 16 12l-7.5 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button id="btn-reload" title="Reload (Ctrl+R)"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button id="btn-home" title="Home (Alt+Home)"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5M6.5 10.5V20h11v-9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
     <input id="urlbar" type="text" spellcheck="false"
            placeholder="Search or enter address" autocomplete="off">
 
-    <button id="btn-bookmark" title="Bookmark this page">&#9734;</button>
-    <button id="btn-downloads" title="Downloads">&#8681;</button>
-    <button id="btn-menu" title="Menu">&#9776;</button>
+    <button id="btn-bookmark" title="Bookmark this page (Ctrl+D)"><svg viewBox="0 0 24 24"><path id="bm-star" d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
+    <button id="btn-menu" title="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
   </header>
 
   <div id="tabstrip">
     <div id="tabs"></div>
-    <button id="btn-newtab" title="New tab (Ctrl+T)">+</button>
+    <button id="btn-newtab" title="New tab (Ctrl+T)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
   </div>
 
   <main id="content"></main>
+
+  <div id="menu" class="hidden">
+    <button data-action="new-tab">New tab<span class="kbd">Ctrl+T</span></button>
+    <button data-action="private-tab">New private tab<span class="kbd">Ctrl+Shift+N</span></button>
+    <hr>
+    <button data-action="downloads">Downloads<span class="kbd">Ctrl+J</span></button>
+    <button data-action="history">History<span class="kbd">Ctrl+H</span></button>
+    <button data-action="bookmarks">Bookmarks<span class="kbd">Ctrl+Shift+O</span></button>
+    <hr>
+    <button data-action="zoom-in">Zoom in<span class="kbd">Ctrl+</span></button>
+    <button data-action="zoom-out">Zoom out<span class="kbd">Ctrl−</span></button>
+    <button data-action="zoom-reset">Reset zoom<span class="kbd">Ctrl0</span></button>
+    <hr>
+    <button data-action="devtools">Developer tools<span class="kbd">F12</span></button>
+    <button data-action="settings">Settings<span class="kbd">Ctrl+,</span></button>
+  </div>
 
   <div id="dlpanel" class="hidden">
     <div class="dlhead">
@@ -36,19 +51,6 @@
     </div>
     <div id="dl-list"></div>
     <div id="dl-empty" class="dl-empty">No downloads yet</div>
-  </div>
-
-  <div id="menu" class="hidden">
-    <button data-action="new-tab">New tab</button>
-    <button data-action="private-tab">New private tab</button>
-    <button data-action="history">History</button>
-    <button data-action="bookmarks">Bookmarks</button>
-    <button data-action="downloads">Downloads</button>
-    <button data-action="settings">Settings</button>
-    <button data-action="zoom-in">Zoom in</button>
-    <button data-action="zoom-out">Zoom out</button>
-    <button data-action="zoom-reset">Reset zoom</button>
-    <button data-action="devtools">Developer tools</button>
   </div>
 
   <script src="app.js"></script>
