@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+        content="default-src 'self' unto:; style-src 'self' 'unsafe-inline' unto:; script-src 'self' unto:; frame-src unto:; img-src * data:; connect-src *">
   <title>Unto Browser</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -32,8 +32,8 @@
     <button data-action="new-tab">New tab</button>
     <button data-action="private-tab">New private tab</button>
     <button data-action="history">History</button>
-    <button data-action="clear-history">Clear history</button>
     <button data-action="bookmarks">Bookmarks</button>
+    <button data-action="settings">Settings</button>
     <button data-action="zoom-in">Zoom in</button>
     <button data-action="zoom-out">Zoom out</button>
     <button data-action="zoom-reset">Reset zoom</button>

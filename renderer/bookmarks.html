@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bookmarks — Unto Browser</title>
+<style>
+:root{--bg:#05070d;--bg2:#0a0f1c;--card:#0e1526;--card2:#131c33;--text:#eef2fb;--muted:#8ea0c4;--border:#1d2946;--accent:#2f6fed;--accent2:#5a8bff}
+*{box-sizing:border-box;margin:0}
+body{min-height:100vh;font:14px/1.5 system-ui,sans-serif;color:var(--text);background:radial-gradient(900px 400px at 50% -10%, var(--bg2), var(--bg));padding:48px 20px}
+.wrap{width:min(720px,94vw);margin:0 auto}
+h1{font-size:24px;margin-bottom:4px}h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:13px;margin-bottom:24px}
+.item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin-bottom:8px;transition:border-color .15s}
+.item:hover{border-color:var(--accent)}
+.item img{width:20px;height:20px;border-radius:5px;background:var(--card2)}
+.item a{color:var(--text);text-decoration:none;font-size:13.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item a:hover{color:var(--accent2)}
+.item button{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;border-radius:6px;padding:4px 8px}
+.item button:hover{background:#e0405a;color:#fff}
+.empty{color:var(--muted);text-align:center;padding:60px 0}
+a.back{color:var(--muted);font-size:12.5px;text-decoration:none;display:inline-block;margin-bottom:20px}
+a.back:hover{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="unto://app/unto.html">← Back</a>
+  <h1>Book<span>marks</span></h1>
+  <div class="sub">Same list as on the start page · stored locally</div>
+  <div id="list"></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+function esc(s){return (s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+function fav(u){try{return 'https://icons.duckduckgo.com/ip3/'+new URL(u).hostname+'.ico';}catch(e){return '';}}
+function render(){
+  let list=[]; try{list=JSON.parse(localStorage.getItem('unto.bookmarks')||'[]');}catch(e){}
+  $('#list').innerHTML = (list&&list.length)? list.map((b,i)=>
+    `<div class="item">
+       <img src="${fav(b.url)}" onerror="this.style.visibility='hidden'">
+       <a href="${esc(b.url)}">${esc(b.name)}</a>
+       <button data-i="${i}" title="Delete">✕</button>
+     </div>`).join('') : '<div class="empty">No bookmarks yet — add them from the start page.</div>';
+  $('#list').querySelectorAll('a').forEach(a=>a.addEventListener('click',e=>{
+    e.preventDefault();
+    try{ window.parent.postMessage({untoNav:a.href},'*'); }catch(err){ location.href=a.href; }
+  }));
+  $('#list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i;
+    list.splice(i,1);
+    localStorage.setItem('unto.bookmarks', JSON.stringify(list));
+    render();
+  });
+}
+render();
+</script>
+</body>
+</html>

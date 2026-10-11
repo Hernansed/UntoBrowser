@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>History — Unto Browser</title>
+<style>
+:root{--bg:#05070d;--bg2:#0a0f1c;--card:#0e1526;--card2:#131c33;--text:#eef2fb;--muted:#8ea0c4;--border:#1d2946;--accent:#2f6fed;--accent2:#5a8bff}
+*{box-sizing:border-box;margin:0}
+body{min-height:100vh;font:14px/1.5 system-ui,sans-serif;color:var(--text);background:radial-gradient(900px 400px at 50% -10%, var(--bg2), var(--bg));padding:48px 20px}
+.wrap{width:min(720px,94vw);margin:0 auto}
+h1{font-size:24px;margin-bottom:4px}h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:13px;margin-bottom:24px}
+.item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:11px 16px;margin-bottom:8px;transition:border-color .15s}
+.item:hover{border-color:var(--accent)}
+.item a{color:var(--text);text-decoration:none;font-size:13.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item a:hover{color:var(--accent2)}
+.item time{color:var(--muted);font-size:12px;flex:none}
+.empty{color:var(--muted);text-align:center;padding:60px 0}
+button.cl{background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:8px 16px;font-size:12.5px;cursor:pointer;margin-bottom:18px}
+button.cl:hover{border-color:#e0405a;color:#ff8ba0}
+a.back{color:var(--muted);font-size:12.5px;text-decoration:none;display:inline-block;margin-bottom:20px}
+a.back:hover{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="unto://app/unto.html">← Back</a>
+  <h1>His<span>tory</span></h1>
+  <div class="sub">Last 200 visits · stored locally only</div>
+  <button class="cl" id="clear">Clear all history</button>
+  <div id="list"></div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+function esc(s){return (s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}
+async function render(){
+  let list=[];
+  if(window.unto&&window.unto.history){ list=await window.unto.history.list(); }
+  else{ try{list=JSON.parse(localStorage.getItem('unto.historyBackup')||'[]');}catch(e){} }
+  list=(list||[]).slice(-200).reverse();
+  $('#list').innerHTML = list.length? list.map(h=>
+    `<div class="item"><a href="${esc(h.url)}">${esc(h.title||h.url)}</a><time>${new Date(h.ts).toLocaleString()}</time></div>`
+  ).join('') : '<div class="empty">Nothing here yet — go browse something.</div>';
+  $('#list').querySelectorAll('a').forEach(a=>a.addEventListener('click',e=>{
+    e.preventDefault();
+    try{ window.parent.postMessage({untoNav:a.href},'*'); }catch(err){ location.href=a.href; }
+  }));
+}
+$('#clear').onclick=async()=>{
+  if(window.unto&&window.unto.history) await window.unto.history.clear();
+  render();
+};
+render();
+</script>
+</body>
+</html>

@@ -43,6 +43,9 @@ function updateNavButtons(view) {
 }
 
 // --------------------------------------------------------------- tab management
+// Memory model: a start-page tab is just an <iframe> in the chrome document
+// (zero extra processes). A real webview (own Chromium renderer, ~80–150 MB)
+// is created ONLY when the tab actually navigates to a website.
 function createTab(url = START_PAGE, isPrivate = false) {
   const id = nextId++;
   const tabEl = document.createElement('div');
@@ -50,7 +53,7 @@ function createTab(url = START_PAGE, isPrivate = false) {
 
   const titleEl = document.createElement('span');
   titleEl.className = 'title';
-  titleEl.textContent = 'New Tab';
+  titleEl.textContent = url === START_PAGE ? 'New Tab' : (url.startsWith('unto://') ? 'Settings' : 'Loading…');
 
   const closeEl = document.createElement('button');
   closeEl.className = 'close';
@@ -62,22 +65,35 @@ function createTab(url = START_PAGE, isPrivate = false) {
   tabEl.addEventListener('click', () => activateTab(id));
   els.tabs.appendChild(tabEl);
 
+  const tab = { id, view: null, el: tabEl, titleEl, private: isPrivate, pendingUrl: url, isStart: url === START_PAGE };
+  tabs.push(tab);
+
+  if (tab.isStart || url.startsWith('unto://')) {
+    attachLightFrame(tab, url);
+  } else {
+    ensureWebview(tab);
+  }
+
+  // handle popups requested by main
+  api.onOpenUrlRequest((u) => createTab(u, false));
+
+  activateTab(id);
+  return id;
+}
+
+// Create the real webview for a tab lazily (first real navigation).
+function ensureWebview(tab) {
+  if (tab.view) return tab.view;
   const view = document.createElement('webview');
-  // Private tabs live in a throwaway in-memory session partition -> no cookies,
-  // no cache on disk, and nothing written to history.
-  if (isPrivate) {
-    view.setAttribute('partition', 'private-' + id + '-' + Date.now());
+  if (tab.private) {
+    view.setAttribute('partition', 'private-' + tab.id + '-' + Date.now());
   }
   view.setAttribute('allowpopups', 'true');
   view.style.display = 'none';
-  // Electron docs pattern: set src BEFORE inserting into the DOM. The value is
-  // stored as an attribute and applied when the webview attaches. Assigning
-  // after insertion (even deferred) is silently dropped -> blank white tab.
-  view.src = url;
+  // Electron docs pattern: set src BEFORE inserting into the DOM.
+  view.src = tab.pendingUrl || HOME_URL;
   els.content.appendChild(view);
-
-  const tab = { id, view, el: tabEl, titleEl, private: isPrivate };
-  tabs.push(tab);
+  tab.view = view;
 
   // ---- webview events ----
   view.addEventListener('did-start-loading', () => {
@@ -117,13 +133,13 @@ function createTab(url = START_PAGE, isPrivate = false) {
   // popup / target=_blank -> new tab
   view.addEventListener('new-window', (e) => {
     e.preventDefault();
-    createTab(e.url, isPrivate);
+    createTab(e.url, tab.private);
   });
 
   view.addEventListener('dom-ready', () => {
     updateNavButtons(view);
     // Record history only for normal http(s) pages in non-private tabs.
-    if (!isPrivate) {
+    if (!tab.private) {
       const url = view.getURL();
       if (/^https?:\/\//i.test(url)) {
         api.history.add({ url, title: view.getTitle() || url });
@@ -138,6 +154,67 @@ function createTab(url = START_PAGE, isPrivate = false) {
   return id;
 }
 
+// Shared light-frame pool: ONE iframe per internal page, created once and
+// reused by every tab pointing at it. Switching tabs = instant, zero reloads.
+const lightFrames = {}; // url -> {frame, refs:Set<tabId>}
+function attachLightFrame(tab, url) {
+  const key = (tab.private ? 'p' + tab.id : '') + url; // private tabs get their own frame
+  let entry = lightFrames[key];
+  if (!entry) {
+    const fr = document.createElement('iframe');
+    fr.className = 'untoframe';
+    fr.src = url;
+    fr.style.display = 'none';
+    els.content.appendChild(fr);
+    entry = lightFrames[key] = { frame: fr, refs: new Set() };
+  }
+  entry.refs.add(tab.id);
+  tab.frame = entry.frame;
+  tab.frameKey = key;
+}
+function releaseLightFrame(tab){
+  const key = tab.frameKey;
+  if (!key || !lightFrames[key]) return;
+  lightFrames[key].refs.delete(tab.id);
+  if (lightFrames[key].refs.size === 0) {
+    lightFrames[key].frame.remove();
+    delete lightFrames[key];
+  }
+  tab.frame = null; tab.frameKey = null;
+}
+
+// Navigate a tab (creating its webview lazily if it was a light start tab).
+function navigateTab(tab, url) {
+  tab.pendingUrl = url;
+  const internal = url === START_PAGE || url.startsWith('unto://');
+  if (internal && !tab.view) {
+    releaseLightFrame(tab);
+    attachLightFrame(tab, url);
+    tab.isStart = url === START_PAGE;
+    if (tab.id === activeId) {
+      tab.frame.style.display = 'flex';
+      setUrlbar('');
+    }
+    return;
+  }
+  // real website -> needs a webview
+  ensureWebview(tab);
+  if (tab.frame) tab.frame.style.display = 'none';
+  tab.view.loadURL(url);
+  if (tab.id === activeId) {
+    tab.view.style.display = 'flex';
+    setUrlbar(url);
+    els.bookmark.disabled = !/^https?:\/\//i.test(url);
+  }
+}
+
+// Unto internal pages (iframe) ask the shell to navigate the tab
+window.addEventListener('message', (e) => {
+  if (!e.data || typeof e.data.untoNav !== 'string') return;
+  const tab = activeTab();
+  if (tab) navigateTab(tab, e.data.untoNav);
+});
+
 function onNavigated(tab, url) {
   tab.view.style.display = 'flex';
   if (tab.id === activeId) {
@@ -151,14 +228,23 @@ function activateTab(id) {
   for (const t of tabs) {
     const on = t.id === id;
     t.el.classList.toggle('active', on);
-    t.view.style.display = on ? 'flex' : 'none';
+    if (t.frame) t.frame.style.display = on ? 'flex' : 'none';
+    if (t.view) t.view.style.display = on ? 'flex' : 'none';
   }
   const t = activeTab();
   if (t) {
-    const url = t.view.getURL();
-    setUrlbar(url.startsWith('unto://app/unto.html') ? '' : (url === 'about:blank' ? '' : url));
-    els.bookmark.disabled = !/^https?:\/\//i.test(url);
-    updateNavButtons(t.view);
+    if (t.view) {
+      const url = t.view.getURL();
+      setUrlbar(url.startsWith('unto://app/unto.html') ? '' : (url === 'about:blank' ? '' : url));
+      els.bookmark.disabled = !/^https?:\/\//i.test(url);
+      updateNavButtons(t.view);
+    } else {
+      // light internal tab
+      setUrlbar('');
+      els.bookmark.disabled = true;
+      els.back.disabled = true;
+      els.fwd.disabled = true;
+    }
   }
   els.urlbar.focus();
 }
@@ -168,7 +254,8 @@ function closeTab(id) {
   if (i === -1) return;
   const [t] = tabs.splice(i, 1);
   t.el.remove();
-  t.view.remove();
+  releaseLightFrame(t);
+  if (t.view) t.view.remove();
   if (tabs.length === 0) {
     window.close();
     return;
@@ -183,15 +270,17 @@ async function navigateFromUrlbar() {
   const tab = activeTab();
   if (!tab) return;
   const url = await api.nav.normalize(els.urlbar.value);
-  tab.view.loadURL(url);
-  tab.view.focus();
+  navigateTab(tab, url);
 }
 
 // ------------------------------------------------------------------ buttons
-els.back.addEventListener('click', () => activeTab()?.view.goBack());
-els.fwd.addEventListener('click', () => activeTab()?.view.goForward());
+els.back.addEventListener('click', () => activeTab()?.view?.goBack());
+els.fwd.addEventListener('click', () => activeTab()?.view?.goForward());
 els.reload.addEventListener('click', () => {
-  const v = activeTab()?.view;
+  const t = activeTab();
+  if (!t) return;
+  if (t.frame && !t.view) { t.frame.src = t.frame.src; return; } // reload light tab
+  const v = t.view;
   if (!v) return;
   if (v.isLoading()) v.stop();
   else v.reload();
@@ -199,7 +288,7 @@ els.reload.addEventListener('click', () => {
 els.home.addEventListener('click', () => {
   const tab = activeTab();
   if (!tab) return;
-  tab.view.loadURL(HOME_URL);
+  navigateTab(tab, HOME_URL);
 });
 els.bookmark.addEventListener('click', async () => {
   const tab = activeTab();
@@ -213,7 +302,11 @@ els.newTab.addEventListener('click', () => createTab(START_PAGE, false));
 
 els.urlbar.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') navigateFromUrlbar();
-  if (e.key === 'Escape') { setUrlbar(activeTab()?.view.getURL() || ''); els.urlbar.blur(); }
+  if (e.key === 'Escape') {
+    const t = activeTab();
+    setUrlbar(t?.view ? (t.view.getURL() || '') : '');
+    els.urlbar.blur();
+  }
 });
 
 // menu ---------------------------------------------------------------------
@@ -230,30 +323,13 @@ els.menu.addEventListener('click', async (e) => {
   switch (action) {
     case 'new-tab': createTab(START_PAGE, false); break;
     case 'private-tab': createTab(START_PAGE, true); break;
-    case 'history': {
-      const list = await api.history.list();
-      const recent = list.slice(-40).reverse();
-      const html = `<body style="font:14px system-ui;padding:24px">
-        <h2>History</h2>
-        <ul>${recent.map((h) =>
-          `<li><a href="${h.url}">${(h.title || h.url).replace(/[<>]/g, '')}</a>
-           <small style="color:#888">${new Date(h.ts).toLocaleString()}</small></li>`).join('')}
-        </ul></body>`;
-      createTab('data:text/html;charset=utf-8,' + encodeURIComponent(html), false);
-      break;
-    }
-    case 'clear-history': await api.history.clear(); els.menu.classList.add('hidden'); break;
-    case 'bookmarks': {
-      const list = await api.bookmarks.list();
-      const html = `<body style="font:14px system-ui;padding:24px"><h2>Bookmarks</h2>
-        <ul>${list.map((b) => `<li><a href="${b.url}">${(b.title || b.url).replace(/[<>]/g, '')}</a></li>`).join('')}</ul></body>`;
-      createTab('data:text/html;charset=utf-8,' + encodeURIComponent(html), false);
-      break;
-    }
-    case 'zoom-in': tab.view.setZoomLevel(tab.view.getZoomLevel() + 0.5); break;
-    case 'zoom-out': tab.view.setZoomLevel(tab.view.getZoomLevel() - 0.5); break;
-    case 'zoom-reset': tab.view.setZoomLevel(0); break;
-    case 'devtools': tab.view.openDevTools(); break;
+    case 'settings': navigateTab(tab, 'unto://app/settings.html'); break;
+    case 'history': navigateTab(tab, 'unto://app/history.html'); break;
+    case 'bookmarks': navigateTab(tab, 'unto://app/bookmarks.html'); break;
+    case 'zoom-in': tab?.view?.setZoomLevel(tab.view.getZoomLevel() + 0.5); break;
+    case 'zoom-out': tab?.view?.setZoomLevel(tab.view.getZoomLevel() - 0.5); break;
+    case 'zoom-reset': tab?.view?.setZoomLevel(0); break;
+    case 'devtools': tab?.view?.openDevTools(); break;
   }
   els.menu.classList.add('hidden');
 });

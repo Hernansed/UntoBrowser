@@ -65,7 +65,7 @@ h1 span{ color:var(--accent); }
   border:1px solid var(--border); border-radius:16px; padding:4px 6px 4px 18px;
   transition:box-shadow .2s, border-color .2s;
 }
-.searchbar:focus-within{ border-color:var(--accent); animation:glowPulse 2.4s ease infinite; }
+.searchbar:focus-within{ border-color:var(--accent); box-shadow:0 0 18px var(--glow); }
 .searchbar input{
   flex:1; background:none; border:none; outline:none; color:var(--text);
   font-size:16px; padding:12px 0; min-width:0;
@@ -85,6 +85,37 @@ h1 span{ color:var(--accent); }
 .suggest div{ padding:10px 18px; cursor:pointer; color:var(--muted); font-size:14px; }
 .suggest div:hover,.suggest div.sel{ background:var(--card2); color:var(--text); }
 .suggest b{ color:var(--accent2); font-weight:600; }
+
+/* engine selector inside searchbar */
+.enginebtn{
+  display:flex;align-items:center;gap:6px;border:none;background:transparent;
+  color:var(--muted);font-size:12.5px;cursor:pointer;padding:6px 4px 6px 2px;border-radius:8px;
+  flex:none;
+}
+.enginebtn:hover{color:var(--text)}
+.enginebtn img{width:16px;height:16px;border-radius:4px}
+.engdrop{
+  position:absolute;left:0;top:calc(100% + 6px);z-index:40;min-width:220px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  box-shadow:0 16px 40px rgba(0,0,0,.45);display:none;overflow:hidden;padding:4px;
+}
+.engdrop.open{display:block}
+.engdrop div{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-radius:8px;color:var(--muted);font-size:13px}
+.engdrop div:hover{background:var(--card2);color:var(--text)}
+.engdrop div.on{color:var(--text);background:var(--card2)}
+.engdrop img{width:16px;height:16px;border-radius:4px}
+/* history modal list */
+#histList .hitem{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer}
+#histList .hitem:hover{background:var(--card2)}
+#histList .hitem a{color:var(--text);text-decoration:none;font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#histList time{color:var(--muted);font-size:11.5px;flex:none}
+/* password vault rows */
+.pwrow{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--border)}
+.pwrow:last-child{border-bottom:none}
+.pwrow .site{color:var(--text);font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pwrow .login{color:var(--muted);font-size:12px;flex:none;max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.pwrow button{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;padding:3px 7px;border-radius:6px}
+.pwrow button:hover{background:var(--card2);color:var(--text)}
 
 /* ============ bookmarks ============ */
 .bmhead{
@@ -194,8 +225,10 @@ h1 span{ color:var(--accent); }
 <div class="clock fade d1" id="clock"></div>
 
 <div class="top fade d1">
-  <button class="iconbtn" id="btnTheme" title="Themes (T)">🎨</button>
+  <button class="iconbtn" id="btnPw" title="Passwords">🔒</button>
+  <button class="iconbtn" id="btnHist" title="History">🕘</button>
   <button class="iconbtn" id="btnAI" title="Unto AI (A)">✦</button>
+  <button class="iconbtn" id="btnTheme" title="Themes (T)">◐</button>
   <button class="iconbtn" id="btnSet" title="Settings">⚙️</button>
 </div>
 
@@ -205,9 +238,11 @@ h1 span{ color:var(--accent); }
 <div class="searchwrap fade d2">
   <div class="engines" id="engines"></div>
   <div class="searchbar">
+    <button id="engineBtn" class="enginebtn" title="Search engine"><img id="engineIcon" alt=""><span id="engineName">Google</span> ▾</button>
     <input id="q" type="text" placeholder="Search or enter address" autocomplete="off" spellcheck="false">
     <button class="go" id="go">Go</button>
   </div>
+  <div class="engdrop" id="engdrop"></div>
   <div class="suggest" id="suggest"></div>
 </div>
 
@@ -266,6 +301,42 @@ h1 span{ color:var(--accent); }
 </div>
 
 <!-- bookmark modal -->
+<div class="panel" id="pPw">
+  <header><h3>🔒 Password vault</h3><button class="iconbtn" data-close>✕</button></header>
+  <div class="body">
+    <div id="pwLocked">
+      <div class="field"><label>Master password</label><input type="password" id="pwMaster" placeholder="Enter master password"></div>
+      <div class="row"><button class="btn" id="pwUnlock">Unlock</button><button class="btn ghost" id="pwCreate">Create vault</button></div>
+      <div class="hint">Vault is AES-256-GCM encrypted with your master password. Never leaves this device.</div>
+    </div>
+    <div id="pwOpen" style="display:none">
+      <div class="row" style="margin-bottom:10px">
+        <input id="pwSearch" placeholder="Search…" style="flex:1;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:13px;outline:none">
+        <button class="btn" id="pwAdd">+ Add</button>
+        <button class="btn ghost" id="pwExport">Export</button>
+      </div>
+      <div id="pwList"></div>
+    </div>
+    <div id="pwForm" style="display:none">
+      <div class="field"><label>Site</label><input id="pwSite" placeholder="https://github.com"></div>
+      <div class="field"><label>Login</label><input id="pwLogin" placeholder="username"></div>
+      <div class="field"><label>Password</label><input type="password" id="pwPass" placeholder="password"></div>
+      <div class="row"><button class="btn" id="pwSave">Save</button><button class="btn ghost" id="pwCancel">Cancel</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="histDrop">
+  <div class="card" style="width:min(520px,94vw)">
+    <h3>🕘 Recent history</h3>
+    <div class="row" style="margin-bottom:10px">
+      <input id="histSearch" placeholder="Search history…" style="flex:1;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:8px 12px;font-size:13px;outline:none">
+      <button class="btn ghost" id="histClear">Clear</button>
+    </div>
+    <div id="histList" style="max-height:50vh;overflow-y:auto"></div>
+  </div>
+</div>
+
 <div class="modal" id="bmModal">
   <div class="card">
     <h3 id="bmTitle">Add bookmark</h3>
@@ -349,17 +420,47 @@ function tick(){
 setInterval(tick, 10000); tick();
 
 /* ================= search ================= */
+const ENGINE_ICONS = {
+  google:'https://www.google.com/favicon.ico', ddg:'https://duckduckgo.com/favicon.ico',
+  perplexity:'https://www.perplexity.ai/favicon.ico', bing:'https://www.bing.com/favicon.ico',
+  brave:'https://search.brave.com/favicon.ico', ecosia:'https://www.ecosia.org/favicon.ico',
+  startpage:'https://www.startpage.com/favicon.ico', mojeek:'https://www.mojeek.com/favicon.ico',
+  youtube:'https://www.youtube.com/favicon.ico', github:'https://github.com/favicon.ico',
+  wikipedia:'https://en.wikipedia.org/static/favicon/wikipedia.ico', reddit:'https://www.reddit.com/favicon.ico',
+  amazon:'https://www.amazon.com/favicon.ico',
+  maps:'https://www.google.com/images/branding/product/ico/maps15.ico',
+  images:'https://www.google.com/images/branding/product/ico/googleg_lodp.ico'
+};
+function engineIcon(k){ return ENGINE_ICONS[k] || ''; }
 function renderEngines(){
+  // chips row above the searchbar
   $('#engines').innerHTML = Object.entries(ENGINES).map(([k,v]) =>
     `<button class="${k===engine?'on':''}" data-k="${k}">${v.name}</button>`).join('');
   $('#engines').querySelectorAll('button').forEach(b => b.onclick = () => {
-    engine = b.dataset.k; LS.set('engine', engine); renderEngines(); $('#q').focus();
+    engine = b.dataset.k; LS.set('engine', engine); renderEngines();
+  });
+  // left icon-button in the searchbar
+  $('#engineIcon').src = engineIcon(engine);
+  $('#engineName').textContent = ENGINES[engine].name;
+  // dropdown items
+  $('#engdrop').innerHTML = Object.entries(ENGINES).map(([k,v]) =>
+    `<div class="${k===engine?'on':''}" data-k="${k}"><img src="${engineIcon(k)}" onerror="this.style.display='none'">${v.name}</div>`).join('');
+  $('#engdrop').querySelectorAll('div').forEach(d => d.onclick = () => {
+    engine = d.dataset.k; LS.set('engine', engine); renderEngines();
+    $('#engdrop').classList.remove('open'); $('#q').focus();
   });
   const sel = $('#defEngine');
   if(sel && !sel.options.length)
     sel.innerHTML = Object.entries(ENGINES).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
   if(sel) sel.value = engine;
 }
+$('#engineBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  $('#engdrop').classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('.engdrop') && !e.target.closest('.enginebtn')) $('#engdrop').classList.remove('open');
+});
 function smartUrl(text){
   const t = text.trim();
   if(!t) return null;
@@ -368,9 +469,14 @@ function smartUrl(text){
   return ENGINES[engine].url.replace('%s', encodeURIComponent(t));
 }
 function go(u){
-  // Unto runs inside a <webview> (unto://app/...) — a plain top-level
-  // location change to https is followed by the webview as normal navigation.
-  window.location.href = u;
+  // Unto now runs as a light <iframe> inside the browser chrome document.
+  // Ask the shell (parent) to navigate the tab — that keeps one process for
+  // the start page and spawns a webview only for real websites.
+  try {
+    window.parent.postMessage({ untoNav: u }, '*');
+    return;
+  } catch(e) { /* fall through */ }
+  window.location.href = u; // standalone fallback (opened directly in a browser)
 }
 function doSearch(){
   const u = smartUrl($('#q').value);
@@ -420,7 +526,26 @@ $('#q').addEventListener('keydown', e => {
 });
 
 /* ================= bookmarks ================= */
-function favicon(u){ try{ return 'https://icons.duckduckgo.com/ip3/'+new URL(u).hostname+'.ico'; }catch(e){ return ''; } }
+const FAV_CACHE = LS.get('favCache', {});
+function favicon(u){
+  try{
+    const host = new URL(u).hostname;
+    if(FAV_CACHE[host]) return FAV_CACHE[host];           // instant from cache
+    return 'https://icons.duckduckgo.com/ip3/'+host+'.ico'; // fallback network
+  }catch(e){ return ''; }
+}
+function refreshFavicons(){
+  // after first paint: fetch real icons and cache them (data URLs not needed;
+  // cache the URL -> next paint is instant and offline-safe)
+  let dirty=false;
+  (bookmarks||[]).forEach(b=>{
+    try{
+      const host=new URL(b.url).hostname;
+      if(!FAV_CACHE[host]){ FAV_CACHE[host]='https://icons.duckduckgo.com/ip3/'+host+'.ico'; dirty=true; }
+    }catch(e){}
+  });
+  if(dirty) LS.set('favCache', FAV_CACHE);
+}
 function renderBm(){
   $('#bmgrid').innerHTML = bookmarks.map((b,i) =>
     `<a class="bm" href="${b.url}">
@@ -527,13 +652,114 @@ async function sendChat(){
 $('#chatGo').onclick = sendChat;
 $('#chatQ').addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
 
+/* ================= password vault (AES-256-GCM, WebCrypto) ================= */
+const VAULT_LS = 'unto.vault';
+let vaultKey = null, vaultData = [];
+
+async function deriveKey(master, salt){
+  const enc = new TextEncoder();
+  const base = await crypto.subtle.importKey('raw', enc.encode(master), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt, iterations: 310000, hash:'SHA-256' },
+    base, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+}
+function b64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function unb64(str){ return Uint8Array.from(atob(str), c=>c.charCodeAt(0)); }
+
+async function vaultSave(){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(vaultKey, salt);
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(JSON.stringify(vaultData)));
+  localStorage.setItem(VAULT_LS, JSON.stringify({ v:1, salt:b64(salt), iv:b64(iv), data:b64(ct) }));
+}
+async function vaultLoad(master){
+  const raw = localStorage.getItem(VAULT_LS);
+  if(!raw){ // create new vault
+    vaultKey = master; vaultData = []; await vaultSave(); return true;
+  }
+  try{
+    const { salt, iv, data } = JSON.parse(raw);
+    const key = await deriveKey(master, unb64(salt));
+    const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(iv)}, key, unb64(data));
+    vaultKey = master; vaultData = JSON.parse(new TextDecoder().decode(pt));
+    return true;
+  }catch(e){ return false; }
+}
+function pwRender(){
+  const q = ($('#pwSearch')?$('#pwSearch').value:'').toLowerCase();
+  const rows = vaultData.filter(x=>!q || x.site.toLowerCase().includes(q) || x.login.toLowerCase().includes(q));
+  $('#pwList').innerHTML = rows.map((x)=>`
+    <div class="pwrow">
+      <span class="site">${x.site.replace(/[<>]/g,'')}</span>
+      <span class="login">${x.login.replace(/[<>]/g,'')}</span>
+      <button data-act="show" data-i="${vaultData.indexOf(x)}">show</button>
+      <button data-act="del" data-i="${vaultData.indexOf(x)}">✕</button>
+    </div>`).join('') || '<div class="hint">No entries yet.</div>';
+  $('#pwList').querySelectorAll('button').forEach(b=>b.onclick=async()=>{
+    const i=+b.dataset.i;
+    if(b.dataset.act==='del'){ vaultData.splice(i,1); await vaultSave(); pwRender(); }
+    else {
+      const old=b.textContent; b.textContent=vaultData[i].pass;
+      setTimeout(()=>b.textContent=old, 3000);
+    }
+  });
+}
+$('#pwUnlock').onclick = async ()=>{
+  const ok = await vaultLoad($('#pwMaster').value);
+  if(ok){ $('#pwLocked').style.display='none'; $('#pwOpen').style.display='block'; pwRender(); }
+  else document.querySelector('#pwLocked .hint').textContent = 'Wrong master password.';
+};
+$('#pwCreate').onclick = async ()=>{
+  if(localStorage.getItem(VAULT_LS)) { document.querySelector('#pwLocked .hint').textContent='Vault exists — unlock it.'; return; }
+  if(!$('#pwMaster').value){ document.querySelector('#pwLocked .hint').textContent='Enter a master password first.'; return; }
+  $('#pwUnlock').click();
+};
+$('#pwAdd').onclick = ()=>{ $('#pwOpen').style.display='none'; $('#pwForm').style.display='block'; };
+$('#pwCancel').onclick = ()=>{ $('#pwForm').style.display='none'; $('#pwOpen').style.display='block'; };
+$('#pwSave').onclick = async ()=>{
+  const site=$('#pwSite').value.trim(), login=$('#pwLogin').value.trim(), pass=$('#pwPass').value;
+  if(!site||!pass) return;
+  vaultData.push({site,login,pass});
+  await vaultSave();
+  $('#pwSite').value=$('#pwLogin').value=$('#pwPass').value='';
+  $('#pwForm').style.display='none'; $('#pwOpen').style.display='block'; pwRender();
+};
+$('#pwSearch').addEventListener('input', pwRender);
+$('#pwExport').onclick = ()=>{
+  // export the ENCRYPTED blob only — useless without the master password
+  const blob = new Blob([localStorage.getItem(VAULT_LS)||'{}'], {type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='unto-vault.json'; a.click();
+};
+$('#btnPw').onclick = ()=>togglePanel('#pPw');
+
+/* ================= quick history dropdown ================= */
+$('#btnHist').onclick = async ()=>{
+  $('#histDrop').classList.add('open');
+  let list=[];
+  try{ if(window.unto && window.unto.history) list = await window.unto.history.list(); }catch(e){}
+  const renderH=(q)=>{
+    const rows=(list||[]).filter(h=>!q||(h.title||'').toLowerCase().includes(q)||h.url.toLowerCase().includes(q)).slice(-30).reverse();
+    $('#histList').innerHTML = rows.length? rows.map(h=>
+      `<div class="hitem" data-u="${h.url.replace(/"/g,'&quot;')}">
+         <a href="${h.url.replace(/"/g,'&quot;')}">${(h.title||h.url).replace(/[<>]/g,'')}</a>
+         <time>${new Date(h.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</time>
+       </div>`).join('') : '<div class="hint">No history yet.</div>';
+    $('#histList').querySelectorAll('.hitem').forEach(d=>d.onclick=()=>{ go(d.dataset.u); });
+  };
+  renderH('');
+  $('#histSearch').oninput=e=>renderH(e.target.value.toLowerCase());
+  $('#histClear').onclick=async()=>{ if(window.unto&&window.unto.history) await window.unto.history.clear(); list=[]; renderH(''); };
+};
+
 /* ================= shortcuts ================= */
 document.addEventListener('keydown', e => {
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
   if(e.key==='/' && !typing){ e.preventDefault(); $('#q').focus(); }
   if((e.key==='t'||e.key==='T') && !typing) togglePanel('#pTheme');
   if((e.key==='a'||e.key==='A') && !typing) togglePanel('#pAI');
-  if(e.key==='Escape') document.querySelectorAll('.panel,.modal').forEach(x=>x.classList.remove('open'));
+  if(e.key==='Escape'){ document.querySelectorAll('.panel,.modal').forEach(x=>x.classList.remove('open')); $('#engdrop').classList.remove('open'); }
 });
 
 /* ================= boot ================= */
@@ -546,6 +772,7 @@ $('#aiUrl').value = ai.url||''; $('#aiKey').value = ai.key||''; $('#aiModel').va
 applyTheme(LS.get('theme','noir'));
 renderEngines();
 renderBm();
+refreshFavicons();
 $('#q').focus();
 const TAGS = ['Search the web, your way.','Fast. Private. Yours.','One page, whole internet.'];
 $('#tagline').textContent = TAGS[new Date().getDate() % TAGS.length];

@@ -15,6 +15,9 @@ contextBridge.exposeInMainWorld('unto', {
   nav: {
     normalize: (text) => ipcRenderer.invoke('nav:normalize', text),
   },
+  privacy: {
+    clearBrowsing: () => ipcRenderer.invoke('privacy:clearBrowsing'),
+  },
   state: {
     get: () => ipcRenderer.invoke('state:get'),
     set: (s) => ipcRenderer.invoke('state:set', s),
