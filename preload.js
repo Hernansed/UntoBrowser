@@ -35,6 +35,11 @@ contextBridge.exposeInMainWorld('unto', {
   },
   downloads: {
     open: (path) => ipcRenderer.invoke('downloads:open', path),
+    list: () => ipcRenderer.invoke('downloads:list'),
+    openSaved: (file) => ipcRenderer.invoke('downloads:openSaved', file),
+    showInFolder: (file) => ipcRenderer.invoke('downloads:showInFolder', file),
+    clear: () => ipcRenderer.invoke('downloads:clear'),
+    onUpdate: (cb) => ipcRenderer.on('downloads:updated', (_e, list) => cb(list)),
   },
   update: {
     check: () => ipcRenderer.invoke('update:check'),

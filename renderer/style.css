@@ -151,6 +151,64 @@ iframe.untoframe {
   background: var(--bg);
 }
 
+/* ---------- downloads panel ---------- */
+#dlpanel {
+  position: fixed;
+  top: 46px;
+  right: 8px;
+  width: 360px;
+  max-height: 420px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 40px rgba(0,0,0,.5);
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#dlpanel.hidden { display: none; }
+.dlhead {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 600; color: var(--text);
+}
+.dlhead button {
+  border: none; background: transparent; color: var(--muted);
+  font-size: 12px; cursor: pointer; padding: 3px 8px; border-radius: 6px;
+}
+.dlhead button:hover { background: var(--card2); color: var(--text); }
+#dl-list { overflow-y: auto; padding: 6px; }
+.dlitem {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 9px 10px; border-radius: 8px; cursor: pointer;
+}
+.dlitem:hover { background: var(--card2); }
+.dlitem .top { display: flex; align-items: center; gap: 8px; }
+.dlitem .nm {
+  flex: 1; font-size: 13px; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dlitem .st { font-size: 11.5px; color: var(--muted); flex: none; }
+.dlitem .st.done { color: #58d68d; }
+.dlitem .st.fail { color: #e0405a; }
+.dlitem .bar {
+  height: 4px; border-radius: 2px; background: var(--card2); overflow: hidden;
+}
+.dlitem .bar i {
+  display: block; height: 100%; background: var(--accent); border-radius: 2px;
+  transition: width .25s;
+}
+.dlitem .acts { display: none; gap: 6px; }
+.dlitem:hover .acts { display: flex; }
+.dlitem .acts button {
+  border: 1px solid var(--border); background: transparent; color: var(--muted);
+  font-size: 11.5px; padding: 3px 9px; border-radius: 6px; cursor: pointer;
+}
+.dlitem .acts button:hover { color: var(--text); border-color: var(--accent); }
+.dl-empty { padding: 22px; text-align: center; color: var(--muted); font-size: 12.5px; }
+
 /* ---------- menu ---------- */
 #menu {
   position: fixed;

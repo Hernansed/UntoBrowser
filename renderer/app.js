@@ -20,6 +20,10 @@ const els = {
   menuBtn: document.getElementById('btn-menu'),
   menu: document.getElementById('menu'),
   newTab: document.getElementById('btn-newtab'),
+  dlBtn: document.getElementById('btn-downloads'),
+  dlPanel: document.getElementById('dlpanel'),
+  dlList: document.getElementById('dl-list'),
+  dlEmpty: document.getElementById('dl-empty'),
 };
 
 /** @type {Array<{id:number, view:Electron.WebviewTag, el:HTMLElement, private:boolean}>} */
@@ -305,8 +309,84 @@ els.urlbar.addEventListener('keydown', (e) => {
 els.menuBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   els.menu.classList.toggle('hidden');
+  els.dlPanel.classList.add('hidden');
 });
 document.addEventListener('click', () => els.menu.classList.add('hidden'));
+
+// downloads panel ------------------------------------------------------------
+let dlItems = [];
+function fmtBytes(n) {
+  if (!n || n < 0) return '';
+  const u = ['B','KB','MB','GB'];
+  let i = 0, v = n;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return (i ? v.toFixed(1) : v) + ' ' + u[i];
+}
+function renderDownloads() {
+  els.dlList.innerHTML = '';
+  els.dlEmpty.style.display = dlItems.length ? 'none' : '';
+  for (const d of dlItems) {
+    const row = document.createElement('div');
+    row.className = 'dlitem';
+    const top = document.createElement('div'); top.className = 'top';
+    const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = d.name || 'file';
+    const st = document.createElement('span'); st.className = 'st';
+    const pct = d.total ? Math.round((d.received / d.total) * 100) : 0;
+    if (d.state === 'completed') { st.textContent = fmtBytes(d.total) || 'done'; st.classList.add('done'); }
+    else if (d.state === 'cancelled') { st.textContent = 'cancelled'; st.classList.add('fail'); }
+    else if (d.state === 'interrupted') { st.textContent = 'failed'; st.classList.add('fail'); }
+    else if (d.state === 'progressing') { st.textContent = pct + '%' + (d.total ? ' · ' + fmtBytes(d.total) : ''); }
+    else st.textContent = 'starting…';
+    top.append(nm, st);
+    row.appendChild(top);
+    if (d.state === 'progressing' || d.state === 'starting') {
+      const bar = document.createElement('div'); bar.className = 'bar';
+      const fill = document.createElement('i'); fill.style.width = pct + '%';
+      bar.appendChild(fill); row.appendChild(bar);
+    } else if (d.state === 'completed' && d.file) {
+      const acts = document.createElement('div'); acts.className = 'acts';
+      const open = document.createElement('button'); open.textContent = 'Open';
+      open.onclick = (e) => { e.stopPropagation(); api.downloads.openSaved(d.file); };
+      const show = document.createElement('button'); show.textContent = 'Show in folder';
+      show.onclick = (e) => { e.stopPropagation(); api.downloads.showInFolder(d.file); };
+      acts.append(open, show);
+      row.appendChild(acts);
+    }
+    row.onclick = () => { if (d.state === 'completed' && d.file) api.downloads.openSaved(d.file); };
+    els.dlList.appendChild(row);
+  }
+}
+function toggleDlPanel() {
+  const hidden = els.dlPanel.classList.toggle('hidden');
+  if (!hidden) {
+    els.menu.classList.add('hidden');
+    api.downloads.list().then((l) => { dlItems = l || []; renderDownloads(); });
+  }
+}
+els.dlBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleDlPanel(); });
+els.dlPanel.addEventListener('click', (e) => e.stopPropagation());
+document.addEventListener('click', () => els.dlPanel.classList.add('hidden'));
+document.getElementById('dl-clear').addEventListener('click', () => {
+  api.downloads.clear().then(() => { dlItems = []; renderDownloads(); });
+});
+if (api.downloads.onUpdate) {
+  api.downloads.onUpdate((list) => {
+    dlItems = list || [];
+    renderDownloads();
+    // progress cue on the toolbar button while something is downloading
+    const active = dlItems.filter((d) => d.state === 'progressing' || d.state === 'starting');
+    if (active.length) {
+      const tot = active.reduce((s, d) => s + (d.total || 0), 0);
+      const rec = active.reduce((s, d) => s + (d.received || 0), 0);
+      const pct = tot ? Math.round((rec / tot) * 100) : 0;
+      els.dlBtn.title = 'Downloads — ' + active.length + ' active (' + pct + '%)';
+      els.dlBtn.style.color = 'var(--accent2)';
+    } else {
+      els.dlBtn.title = 'Downloads';
+      els.dlBtn.style.color = '';
+    }
+  });
+}
 
 els.menu.addEventListener('click', async (e) => {
   const action = e.target.dataset.action;
@@ -318,6 +398,7 @@ els.menu.addEventListener('click', async (e) => {
     case 'settings': navigateTab(tab, 'unto://app/settings.html'); break;
     case 'history': navigateTab(tab, 'unto://app/history.html'); break;
     case 'bookmarks': navigateTab(tab, 'unto://app/bookmarks.html'); break;
+    case 'downloads': toggleDlPanel(); break;
     case 'zoom-in': tab?.view?.setZoomLevel(tab.view.getZoomLevel() + 0.5); break;
     case 'zoom-out': tab?.view?.setZoomLevel(tab.view.getZoomLevel() - 0.5); break;
     case 'zoom-reset': tab?.view?.setZoomLevel(0); break;

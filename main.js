@@ -159,6 +159,7 @@ ipcMain.handle('nav:normalize', (_e, text) => normalizeInput(text));
 
 // Downloads ----------------------------------------------------------------
 ipcMain.handle('downloads:open', (_e, fileUrl) => shell.openPath(fileUrl));
+ipcMain.handle('downloads:openSaved', (_e, file) => shell.openPath(file));
 
 // Persist window state (size/position) ------------------------------------
 const STATE_FILE = path.join(USER_DATA_DIR, 'window-state.json');
@@ -208,15 +209,55 @@ function hookSession(ses) {
       cb({ redirectURL: 'https://' + details.url.slice(7) });
     } else cb({});
   });
-  // Downloads: ask where to save (default dialog) vs auto-save to Downloads
+  // Downloads: track progress, ask-where vs auto-save to Downloads
   ses.on('will-download', (_e, item) => {
     if (appSettings.askDownloadPath === false) {
       item.setSavePath(path.join(app.getPath('downloads'), item.getFilename()));
     }
+    const id = dlNextId++;
+    const entry = {
+      id,
+      file: item.getSavePath(),
+      name: item.getFilename(),
+      url: item.getURL(),
+      state: 'starting',
+      received: 0,
+      total: item.getTotalBytes(),
+      startedAt: Date.now(),
+    };
+    downloads.push(entry);
+    pushDownloads();
+    item.on('updated', (_ev, state) => {
+      entry.state = state === 'interrupted' ? 'interrupted' : 'progressing';
+      entry.received = item.getReceivedBytes();
+      entry.total = item.getTotalBytes();
+      entry.file = item.getSavePath() || entry.file;
+      pushDownloads();
+    });
+    item.once('done', (_ev, state) => {
+      entry.state = state === 'completed' ? 'completed' : 'cancelled';
+      entry.received = item.getReceivedBytes();
+      entry.total = item.getTotalBytes();
+      entry.file = item.getSavePath() || entry.file;
+      pushDownloads();
+    });
   });
 }
 
 app.on('session-created', hookSession);
+
+// ------------------------------------------------------------- downloads UI
+const downloads = [];
+let dlNextId = 1;
+function pushDownloads() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('downloads:updated', downloads);
+  }
+}
+ipcMain.handle('downloads:list', () => downloads);
+ipcMain.handle('downloads:openPath', (_e, file) => shell.openPath(file));
+ipcMain.handle('downloads:showInFolder', (_e, file) => { shell.showItemInFolder(file); return true; });
+ipcMain.handle('downloads:clear', () => { downloads.length = 0; pushDownloads(); return true; });
 
 ipcMain.handle('settings:get', () => appSettings);
 ipcMain.handle('settings:set', (_e, patch) => {

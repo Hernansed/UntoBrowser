@@ -18,6 +18,7 @@
            placeholder="Search or enter address" autocomplete="off">
 
     <button id="btn-bookmark" title="Bookmark this page">&#9734;</button>
+    <button id="btn-downloads" title="Downloads">&#8681;</button>
     <button id="btn-menu" title="Menu">&#9776;</button>
   </header>
 
@@ -28,11 +29,21 @@
 
   <main id="content"></main>
 
+  <div id="dlpanel" class="hidden">
+    <div class="dlhead">
+      <span>Downloads</span>
+      <button id="dl-clear" title="Clear list">Clear</button>
+    </div>
+    <div id="dl-list"></div>
+    <div id="dl-empty" class="dl-empty">No downloads yet</div>
+  </div>
+
   <div id="menu" class="hidden">
     <button data-action="new-tab">New tab</button>
     <button data-action="private-tab">New private tab</button>
     <button data-action="history">History</button>
     <button data-action="bookmarks">Bookmarks</button>
+    <button data-action="downloads">Downloads</button>
     <button data-action="settings">Settings</button>
     <button data-action="zoom-in">Zoom in</button>
     <button data-action="zoom-out">Zoom out</button>
