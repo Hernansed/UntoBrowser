@@ -411,7 +411,9 @@ if (api.downloads.onUpdate) {
 }
 
 els.menu.addEventListener('click', async (e) => {
-  const action = e.target.dataset.action;
+  const btn = e.target.closest('button[data-action]');
+  if (!btn || !els.menu.contains(btn)) return;
+  const action = btn.dataset.action;
   if (!action) return;
   const tab = activeTab();
   switch (action) {

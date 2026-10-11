@@ -628,13 +628,10 @@ startmenu.addEventListener('click', (e) => {
   if (m==='theme') togglePanel('#pTheme');
   else if (m==='ai') togglePanel('#pAI');
   else if (m==='pw') togglePanel('#pPw');
-  else if (m==='hist') $('#btnHist').click();
+  else if (m==='hist') go('unto://app/history.html');
   else if (m==='dl') go('unto://app/downloads.html');
   else if (m==='set') go('unto://app/settings.html' + (window.__untoUpdate ? '#updates' : ''));
 });
-$('#btnTheme').onclick = () => togglePanel('#pTheme');
-$('#btnSet').onclick = () => togglePanel('#pSet');
-$('#btnAI').onclick = () => togglePanel('#pAI');
 $('#defEngine').onchange = e => { engine = e.target.value; LS.set('engine', engine); renderEngines(); };
 $('#saveSet').onclick = () => {
   LS.set('ai', { url:$('#aiUrl').value.trim(), key:$('#aiKey').value.trim(), model:$('#aiModel').value.trim() });
@@ -767,10 +764,8 @@ $('#pwExport').onclick = ()=>{
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='unto-vault.json'; a.click();
 };
-$('#btnPw').onclick = ()=>togglePanel('#pPw');
-
 /* ================= quick history dropdown ================= */
-$('#btnHist').onclick = async ()=>{
+async function openHistDrop(){
   $('#histDrop').classList.add('open');
   let list=[];
   try{ if(window.unto && window.unto.history) list = await window.unto.history.list(); }catch(e){}
@@ -786,7 +781,7 @@ $('#btnHist').onclick = async ()=>{
   renderH('');
   $('#histSearch').oninput=e=>renderH(e.target.value.toLowerCase());
   $('#histClear').onclick=async()=>{ if(window.unto&&window.unto.history) await window.unto.history.clear(); list=[]; renderH(''); };
-};
+}
 
 /* ================= shortcuts ================= */
 document.addEventListener('keydown', e => {
