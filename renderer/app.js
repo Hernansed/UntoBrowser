@@ -28,6 +28,7 @@ const els = {
 
 /** @type {Array<{id:number, view:Electron.WebviewTag, el:HTMLElement, private:boolean}>} */
 const tabs = [];
+const closedTabs = []; // for Ctrl+Shift+T reopen
 let activeId = 0;
 let nextId = 1;
 
@@ -249,6 +250,8 @@ function closeTab(id) {
   const i = tabs.findIndex((t) => t.id === id);
   if (i === -1) return;
   const [t] = tabs.splice(i, 1);
+  closedTabs.push({ url: t.pendingUrl || START_PAGE, private: t.private });
+  if (closedTabs.length > 25) closedTabs.shift();
   t.el.remove();
   releaseLightFrame(t);
   if (t.view) t.view.remove();
@@ -408,18 +411,55 @@ els.menu.addEventListener('click', async (e) => {
 });
 
 // --------------------------------------------------------------- hotkeys
+function reopenLastTab() {
+  const last = closedTabs.pop();
+  if (last) createTab(last.url, last.private);
+}
+function openInternalPage(page) {
+  const tab = activeTab();
+  if (tab) navigateTab(tab, 'unto://app/' + page);
+}
 document.addEventListener('keydown', (e) => {
   const tab = activeTab();
   const ctrl = e.ctrlKey || e.metaKey;
-  if (ctrl && e.key.toLowerCase() === 't') { e.preventDefault(); createTab(START_PAGE, false); }
-  else if (ctrl && e.key.toLowerCase() === 'w') { e.preventDefault(); closeTab(activeId); }
-  else if (ctrl && e.key.toLowerCase() === 'l') { e.preventDefault(); els.urlbar.focus(); els.urlbar.select(); }
-  else if (ctrl && e.key.toLowerCase() === 'r') { e.preventDefault(); tab?.view.reload(); }
+  const k = e.key.toLowerCase();
+  if (ctrl && e.shiftKey && k === 't') { e.preventDefault(); reopenLastTab(); }            // reopen closed tab
+  else if (ctrl && k === 't') { e.preventDefault(); createTab(START_PAGE, false); }        // new tab
+  else if (ctrl && k === 'n') { e.preventDefault(); createTab(START_PAGE, false); }        // new window → new tab (single-window UI)
+  else if (ctrl && e.shiftKey && k === 'n') { e.preventDefault(); createTab(START_PAGE, true); } // new private tab
+  else if (ctrl && k === 'w') { e.preventDefault(); closeTab(activeId); }                  // close tab
+  else if (ctrl && e.shiftKey && k === 'w') { e.preventDefault(); window.close(); }        // close window
+  else if (ctrl && k === 'l' || e.altKey && k === 'd') { e.preventDefault(); els.urlbar.focus(); els.urlbar.select(); } // address bar
+  else if (ctrl && k === 'r' || e.key === 'F5') { e.preventDefault(); if (tab) { if (tab.frame && !tab.view) { tab.frame.src = tab.frame.src; } else tab?.view.reload(); } } // reload
+  else if (ctrl && k === 'j') { e.preventDefault(); toggleDlPanel(); }                     // downloads
+  else if (ctrl && k === 'h') { e.preventDefault(); openInternalPage('history.html'); }    // history
+  else if (ctrl && e.shiftKey && k === 'o') { e.preventDefault(); openInternalPage('bookmarks.html'); } // bookmarks manager
+  else if (ctrl && k === 'd') { e.preventDefault(); els.bookmark.click(); }                // bookmark this page
+  else if (ctrl && k === 'p') { e.preventDefault(); tab?.view.print(); }                   // print
+  else if (ctrl && k === 'f') { e.preventDefault(); tab?.view.findInPage && tab.view.findInPage(els.urlbar.value || ''); els.urlbar.focus(); } // find
+  else if (ctrl && k === ',') { e.preventDefault(); openInternalPage('settings.html'); }   // settings (Chrome style)
   else if (ctrl && (e.key === '+' || e.key === '=')) { e.preventDefault(); tab?.view.setZoomLevel(tab.view.getZoomLevel() + 0.5); }
-  else if (ctrl && e.key === '-') { e.preventDefault(); tab?.view.setZoomLevel(tab.view.getZoomLevel() - 0.5); }
-  else if (ctrl && e.key === '0') { e.preventDefault(); tab?.view.setZoomLevel(0); }
+  else if (ctrl && k === '-') { e.preventDefault(); tab?.view.setZoomLevel(tab.view.getZoomLevel() - 0.5); }
+  else if (ctrl && k === '0') { e.preventDefault(); tab?.view.setZoomLevel(0); }
   else if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); tab?.view.goBack(); }
   else if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); tab?.view.goForward(); }
+  else if (e.altKey && e.key === 'Home') { e.preventDefault(); if (tab) navigateTab(tab, HOME_URL); }
+  else if (ctrl && /^[1-8]$/.test(e.key)) {                                                // switch to tab N
+    e.preventDefault(); const t = tabs[+e.key - 1]; if (t) activateTab(t.id);
+  }
+  else if (ctrl && e.key === '9') {                                                        // last tab
+    e.preventDefault(); if (tabs.length) activateTab(tabs[tabs.length - 1].id);
+  }
+  else if (ctrl && e.shiftKey && e.key === 'Tab') {                                        // prev tab
+    e.preventDefault(); const i = tabs.findIndex((t) => t.id === activeId);
+    if (i > 0) activateTab(tabs[i - 1].id); else if (tabs.length) activateTab(tabs[tabs.length - 1].id);
+  }
+  else if (ctrl && e.key === 'Tab') {                                                      // next tab
+    e.preventDefault(); const i = tabs.findIndex((t) => t.id === activeId);
+    if (i < tabs.length - 1) activateTab(tabs[i + 1].id); else if (tabs.length) activateTab(tabs[0].id);
+  }
+  else if (ctrl && e.shiftKey && k === 'a') { e.preventDefault(); toggleDlPanel(); }       // (Shift alt for downloads too)
+  else if (e.key === 'F12') { e.preventDefault(); tab?.view.openDevTools(); }              // devtools
 });
 
 // handle popups requested by main (register ONCE, not per tab)

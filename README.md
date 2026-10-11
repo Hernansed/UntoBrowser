@@ -87,10 +87,22 @@ npm run dist         # both
 | Keys | Action |
 |---|---|
 | Ctrl+T / Ctrl+W | new tab / close tab |
-| Ctrl+L | focus address bar |
-| Ctrl+R | reload |
+| Ctrl+Shift+T | reopen last closed tab |
+| Ctrl+N / Ctrl+Shift+N | new window / new private tab |
+| Ctrl+Tab / Ctrl+Shift+Tab | next / previous tab |
+| Ctrl+1…8 / Ctrl+9 | jump to tab N / last tab |
+| Ctrl+L or Alt+D | focus address bar |
+| Ctrl+R or F5 | reload |
+| Ctrl+J | downloads panel |
+| Ctrl+H | history |
+| Ctrl+Shift+O | bookmarks |
+| Ctrl+D | bookmark this page |
+| Ctrl+, | settings |
+| Ctrl+F | find in page |
+| Ctrl+P | print |
 | Ctrl+Plus / Ctrl+Minus / Ctrl+0 | zoom in / out / reset |
-| Alt+Left / Alt+Right | back / forward |
+| Alt+Left / Alt+Right / Alt+Home | back / forward / home |
+| F12 | DevTools |
 
 ## Project layout (the whole thing)
 
