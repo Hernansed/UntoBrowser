@@ -47,3 +47,21 @@ jobs:
             dist/*.deb
             dist/*.rpm
           generate_release_notes: true
+
+      - name: Prune stale assets from earlier attempts
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ver = process.env.GITHUB_REF_NAME.replace(/^v/, '');
+            const owner = context.repo.owner, repo = context.repo.repo;
+            const rel = await github.rest.repos.getReleaseByTag({ owner, repo, tag: process.env.GITHUB_REF_NAME });
+            for (const a of rel.data.assets) {
+              const stale = (a.name.endsWith('.exe') || a.name.endsWith('.deb') || a.name.endsWith('.rpm')
+                || a.name.endsWith('.blockmap') || a.name.endsWith('.yml'))
+                && !a.name.includes(ver) && !a.name.includes('latest');
+              if (stale) {
+                core.info('Deleting stale asset: ' + a.name);
+                await github.rest.repos.deleteReleaseAsset({ owner, repo, asset_id: a.id }).catch(e => core.warning(e.message));
+              }
+            }
