@@ -30,6 +30,13 @@ a.back:hover{color:var(--text)}
   <div class="sub">Same list as on the start page · stored locally</div>
   <div id="list"></div>
 </div>
+<script src="themes.js"></script>
+<script>
+if (window.unto && window.unto.theme) {
+  window.unto.theme.get().then(untoApplyTheme);
+  window.unto.theme.onChanged(untoApplyTheme);
+}
+</script>
 <script>
 const $=s=>document.querySelector(s);
 function esc(s){return (s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));}

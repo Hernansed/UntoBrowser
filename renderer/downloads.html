@@ -40,6 +40,13 @@ a.back:hover{color:var(--text)}
   <div id="list"></div>
   <div id="empty" class="empty" style="display:none">No downloads yet — something you save from the web will show up here.</div>
 </div>
+<script src="themes.js"></script>
+<script>
+if (window.unto && window.unto.theme) {
+  window.unto.theme.get().then(untoApplyTheme);
+  window.unto.theme.onChanged(untoApplyTheme);
+}
+</script>
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));

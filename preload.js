@@ -33,6 +33,11 @@ contextBridge.exposeInMainWorld('unto', {
     save: (data) => ipcRenderer.invoke('session:save', data),
     get: () => ipcRenderer.invoke('session:get'),
   },
+  theme: {
+    get: () => ipcRenderer.invoke('theme:get'),
+    set: (name) => ipcRenderer.invoke('theme:set', name),
+    onChanged: (cb) => ipcRenderer.on('theme:changed', (_e, n) => cb(n)),
+  },
   downloads: {
     open: (path) => ipcRenderer.invoke('downloads:open', path),
     list: () => ipcRenderer.invoke('downloads:list'),

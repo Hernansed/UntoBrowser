@@ -263,6 +263,15 @@ ipcMain.handle('downloads:showInFolder', (_e, file) => { shell.showItemInFolder(
 ipcMain.handle('downloads:clear', () => { downloads.length = 0; pushDownloads(); return true; });
 
 ipcMain.handle('settings:get', () => appSettings);
+ipcMain.handle('theme:get', () => appSettings.theme || 'noir');
+ipcMain.handle('theme:set', (_e, name) => {
+  appSettings.theme = String(name || 'noir');
+  writeJson(SETTINGS_FILE, appSettings);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('theme:changed', appSettings.theme);
+  }
+  return true;
+});
 ipcMain.handle('settings:set', (_e, patch) => {
   Object.assign(appSettings, patch || {});
   writeJson(SETTINGS_FILE, appSettings);

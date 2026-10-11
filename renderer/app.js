@@ -5,6 +5,22 @@
 // how modern Electron browsers isolate tabs.
 
 const api = window.unto;
+
+// ---- chrome theming: toolbar/tabstrip/menu repaint with the active theme ----
+function applyChromeTheme(def) {
+  const root = document.documentElement;
+  for (const [k, v] of Object.entries(def)) root.style.setProperty('--' + k, v);
+}
+if (api.theme) {
+  api.theme.get().then((n) => {
+    const THEME_DEFS = window.UNTO_THEMES;
+    if (THEME_DEFS && THEME_DEFS[n]) applyChromeTheme(THEME_DEFS[n]);
+  });
+  api.theme.onChanged((n) => {
+    const THEME_DEFS = window.UNTO_THEMES;
+    if (THEME_DEFS && THEME_DEFS[n]) applyChromeTheme(THEME_DEFS[n]);
+  });
+}
 const RELOAD_SVG = '<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v4h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const STOP_SVG = '<svg viewBox="0 0 24 24" style="width:17px;height:17px;display:block"><path d="M7 7h10v10H7z" fill="currentColor"/></svg>';
 const START_PAGE = 'unto://app/unto.html'; // bundled start page via custom protocol
