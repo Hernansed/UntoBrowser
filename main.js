@@ -88,6 +88,9 @@ function createWindow() {
   // No menu bar for a browser-chrome look; keep DevTools shortcut available.
   Menu.setApplicationMenu(null);
 
+  // Start maximized (full work area) on every platform.
+  mainWindow.maximize();
+
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   // mainWindow.webContents.openDevTools({ mode: 'detach' }); // uncomment to debug
   mainWindow.on('closed', () => { mainWindow = null; });
