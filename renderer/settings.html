@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="stylesheet" href="pages.css">
 <title>Settings — Unto Browser</title>
 <style>
 :root{
@@ -101,6 +102,11 @@ a:hover{text-decoration:underline}
   <main>
     <h1>Settings</h1>
     <div class="sub">Changes are saved automatically</div>
+    <input id="setSearch" type="text" placeholder="Search settings…  (try “proxy”, “theme”, “https”)"
+           style="width:100%;max-width:520px;margin:0 0 18px;padding:10px 14px;border-radius:10px;
+                  border:1px solid var(--border);background:var(--card);color:var(--text);
+                  font-size:13.5px;outline:none">
+    <div id="noResults" style="display:none;color:var(--muted);padding:8px 0 20px;font-size:13px">Nothing matches — try another word.</div>
 
     <!-- ================= GENERAL ================= -->
     <section id="s-general" class="on">
@@ -372,6 +378,29 @@ document.querySelectorAll('input[name=pmode]').forEach(r => r.onchange = () => {
   save(collect());
 });
 ['#pxHost','#pxPort','#pxType','#pxBypass'].forEach(id => $(id).addEventListener('change', () => save(collect())));
+
+/* ---- settings search ---- */
+const searchSections = () => {
+  const q = $('#setSearch').value.trim().toLowerCase();
+  const noRes = $('#noResults');
+  let any = false;
+  document.querySelectorAll('main section').forEach(sec => {
+    const text = sec.textContent.toLowerCase();
+    const hit = !q || text.includes(q);
+    sec.style.display = (hit || !q) ? '' : 'none';
+    if (hit) any = true;
+  });
+  noRes.style.display = (q && !any) ? '' : 'none';
+};
+$('#setSearch').addEventListener('input', searchSections);
+$('#setSearch').addEventListener('keydown', e => { if (e.key === 'Escape') { e.target.value=''; searchSections(); } });
+
+/* ---- deep link (#updates etc.) ---- */
+if (location.hash) {
+  const target = location.hash.slice(1);
+  const btn = document.querySelector('nav button[data-s="' + target + '"]');
+  if (btn) btn.click();
+}
 
 /* ---- data clearing ---- */
 $('#clearHist').onclick = async () => { if (window.unto?.history) await window.unto.history.clear(); toast(); };

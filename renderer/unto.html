@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Unto</title>
 <style>
+html { color-scheme: dark; }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a3550; border-radius: 6px; border: 3px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: #3d4c72; background-clip: content-box; }
+body { font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; }
+button, input, select, textarea { font-family: inherit; }
+select option { background: #0e1526; color: #eef2fb; }
+
 /* ============ theme tokens (24 themes injected at runtime) ============ */
 html[data-anim="0"] *{ animation:none!important; transition:none!important; }
 @media (prefers-reduced-motion:reduce){ *{ animation:none!important; transition:none!important; } }
@@ -668,7 +677,7 @@ startmenu.addEventListener('click', (e) => {
   else if (m==='pw') togglePanel('#pPw');
   else if (m==='hist') $('#btnHist').click();
   else if (m==='dl') go('unto://app/downloads.html');
-  else if (m==='set') go('unto://app/settings.html');
+  else if (m==='set') go('unto://app/settings.html' + (window.__untoUpdate ? '#updates' : ''));
 });
 $('#btnTheme').onclick = () => togglePanel('#pTheme');
 $('#btnSet').onclick = () => togglePanel('#pSet');

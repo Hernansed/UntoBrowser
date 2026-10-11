@@ -1,0 +1,22 @@
+/* pages.css — shared fixes for Unto internal pages (Windows first of all):
+   native controls, scrollbars and fonts follow the dark theme instead of
+   popping up white (the classic "crooked UI" on Windows). */
+html { color-scheme: dark; }
+
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #2a3550;
+  border-radius: 6px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: #3d4c72; background-clip: content-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+body { font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; }
+button, input, select, textarea { font-family: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--accent, #2f6fed); outline-offset: 1px; }
+select option { background: #0e1526; color: #eef2fb; }

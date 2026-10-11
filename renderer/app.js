@@ -477,14 +477,17 @@ api.onOpenUrlRequest((u) => createTab(u, false));
   api.update.check().then((r) => {
     if (r && r.ok && r.updateAvailable) {
       els.menuBtn.style.color = 'var(--accent2)';
-      els.menuBtn.title = 'Update available: v' + r.latest + ' — open Settings';
+      els.menuBtn.title = 'Update available: v' + r.latest;
       const btn = document.createElement('button');
-      btn.textContent = 'Update to v' + r.latest;
+      btn.dataset.action = 'update';
+      btn.innerHTML = 'Update to v' + r.latest + ' <span class="kbd" style="color:var(--accent2);border-color:var(--accent)">↑</span>';
       btn.addEventListener('click', () => {
         els.menu.classList.add('hidden');
-        navigateTab(activeTab(), 'unto://app/settings.html');
+        const tab = activeTab();
+        if (tab) navigateTab(tab, 'unto://app/settings.html#updates');
       });
-      els.menu.insertBefore(btn, els.menu.querySelector('[data-action="zoom-in"]'));
+      const hr = els.menu.querySelector('hr');
+      els.menu.insertBefore(btn, hr || els.menu.firstChild);
     }
   }).catch(() => {});
   window.addEventListener('beforeunload', () => {
