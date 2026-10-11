@@ -59,7 +59,7 @@ input[type=color]{width:44px;height:36px;border:1px solid var(--border);border-r
 <div class="wrap">
   <a class="back" href="unto://app/unto.html">← Back to start page</a>
   <h1>Un<span>to</span> Settings</h1>
-  <div class="sub">Unto Browser 0.5.0 · Chromium engine · all data stays on your device</div>
+  <div class="sub" id="verLine">Unto Browser · Chromium engine · all data stays on your device</div>
 
   <section>
     <h2>Search</h2>
@@ -118,6 +118,17 @@ input[type=color]{width:44px;height:36px;border:1px solid var(--border);border-r
       <input type="text" id="aiModel" placeholder="gpt-4o-mini"></div>
   </section>
 
+  <section>
+    <h2>Updates</h2>
+    <div class="row">
+      <label id="updLabel">Checking for updates…<small id="updSub"></small></label>
+      <span style="display:flex;gap:8px;align-items:center">
+        <button class="btn ghost" id="updCheck">Check for updates</button>
+        <button class="btn" id="updInstall" style="display:none">Download &amp; install</button>
+      </span>
+    </div>
+  </section>
+
   <div style="display:flex;align-items:center;gap:14px">
     <button class="btn" id="save">Save settings</button>
     <span class="saved" id="savedMsg">Saved ✓</span>
@@ -130,6 +141,11 @@ const LS = {
   set(k,v){ localStorage.setItem('unto.'+k, JSON.stringify(v)); }
 };
 const $ = s => document.querySelector(s);
+if (window.unto && window.unto.update) {
+  window.unto.update.check().then(r => {
+    if (r && r.ok) $('#verLine').textContent = 'Unto Browser ' + r.current + ' · Chromium engine · all data stays on your device';
+  }).catch(()=>{});
+}
 
 const ENGINES = {
   google:'Google', ddg:'DuckDuckGo', perplexity:'Perplexity', bing:'Bing', brave:'Brave',
@@ -177,6 +193,49 @@ $('#save').onclick = ()=>{
   flash();
 };
 function flash(){ const m=$('#savedMsg'); m.classList.add('show'); setTimeout(()=>m.classList.remove('show'),1500); }
+
+// ---- updates ---------------------------------------------------------------
+const updLabel = $('#updLabel'), updSub = $('#updSub');
+const updInstall = $('#updInstall');
+function updSay(main, sub){ updLabel.childNodes[0].nodeValue = main; updSub.textContent = sub || ''; }
+
+async function checkUpdates(silent){
+  updSay('Checking for updates…');
+  updInstall.style.display = 'none';
+  try {
+    const r = await window.unto.update.check();
+    if (!r.ok) { updSay('Update check failed', r.error || ''); return; }
+    if (r.updateAvailable) {
+      updSay('Update available: v' + r.latest, 'you have v' + r.current + ' — click to download & install');
+      updInstall.style.display = '';
+    } else {
+      updSay('Unto is up to date', 'version ' + r.current);
+      if (!silent) updSub.textContent = 'version ' + r.current;
+    }
+  } catch (e) {
+    updSay('Update check failed', String(e && e.message || e));
+  }
+}
+
+updInstall.onclick = async () => {
+  updInstall.disabled = true;
+  updSay('Downloading update…', 'this may take a minute');
+  try {
+    const r = await window.unto.update.install();
+    if (r.ok) {
+      updSay('Update downloaded — installing…', 'the installer will replace the app; restart Unto when it finishes');
+    } else if (r.error === 'already-up-to-date') {
+      updSay('Unto is up to date');
+    } else {
+      updSay('Update failed', r.error || '');
+    }
+  } catch (e) {
+    updSay('Update failed', String(e && e.message || e));
+  }
+  updInstall.disabled = false;
+};
+$('#updCheck').onclick = () => checkUpdates(false);
+checkUpdates(true);
 </script>
 </body>
 </html>

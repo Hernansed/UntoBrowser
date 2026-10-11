@@ -349,6 +349,20 @@ api.onOpenUrlRequest((u) => createTab(u, false));
   const state = await api.state.get();
   createTab(START_PAGE, false);
   els.urlbar.focus();
+  // silent update check at startup — subtle menu cue when a new version exists
+  api.update.check().then((r) => {
+    if (r && r.ok && r.updateAvailable) {
+      els.menuBtn.textContent = '\u21BB';
+      els.menuBtn.title = 'Update available: v' + r.latest + ' — open Settings';
+      const btn = document.createElement('button');
+      btn.textContent = 'Update to v' + r.latest;
+      btn.addEventListener('click', () => {
+        els.menu.classList.add('hidden');
+        navigateTab(activeTab(), 'unto://app/settings.html');
+      });
+      els.menu.insertBefore(btn, els.menu.querySelector('[data-action="zoom-in"]'));
+    }
+  }).catch(() => {});
   window.addEventListener('beforeunload', () => {
     api.state.set({ w: window.innerWidth, h: window.innerHeight });
   });

@@ -28,5 +28,9 @@ contextBridge.exposeInMainWorld('unto', {
   downloads: {
     open: (path) => ipcRenderer.invoke('downloads:open', path),
   },
+  update: {
+    check: () => ipcRenderer.invoke('update:check'),
+    install: () => ipcRenderer.invoke('update:install'),
+  },
   onOpenUrlRequest: (cb) => ipcRenderer.on('tabs:open-request', (_e, url) => cb(url)),
 });

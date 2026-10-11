@@ -168,7 +168,121 @@ ipcMain.handle('state:set', (_e, s) => { writeJson(STATE_FILE, s); return true; 
 // Private mode: per-tab in-memory session partition ------------------------
 ipcMain.handle('private:partition', () => 'private-' + Date.now());
 
-// Privacy: wipe cache + cookies + storage (settings page) -------------------
+// Auto-update: check GitHub Releases for a newer version and install it -----
+// No electron-updater dependency: plain fetch + installer hand-off.
+const REPO = 'Hernansed/UntoBrowser';
+const MY_VERSION = app.getVersion();
+
+function cmpVersions(a, b) {
+  const pa = String(a).split('.').map(Number);
+  const pb = String(b).split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d) return d;
+  }
+  return 0;
+}
+
+async function fetchLatestRelease() {
+  const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
+    headers: {
+      'User-Agent': 'Unto-Browser-Updater',
+      'Accept': 'application/vnd.github+json',
+    },
+  });
+  if (!res.ok) throw new Error('GitHub API ' + res.status);
+  return res.json();
+}
+
+function pickInstallerAsset(release) {
+  const assets = Array.isArray(release.assets) ? release.assets : [];
+  const tag = String(release.tag_name || '');
+  if (process.platform === 'win32') {
+    // Unto.Browser.Setup.0.6.1.exe (NSIS)
+    return assets.find((a) => /^Unto\.Browser\.Setup\.[\d.]+\.exe$/i.test(a.name)) || null;
+  }
+  // Unto-Browser-0.6.1.sh (self-extracting installer)
+  return assets.find((a) => /^Unto-Browser-[\d.]+\.sh$/i.test(a.name)) || null;
+}
+
+function downloadTo(url, dest) {
+  return new Promise((resolve, reject) => {
+    const follow = (u, redirects) => {
+      const mod = u.startsWith('https:') ? require('https') : require('http');
+      mod.get(u, { headers: { 'User-Agent': 'Unto-Browser-Updater' } }, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          if (redirects > 5) return reject(new Error('too many redirects'));
+          res.resume();
+          return follow(new URL(res.headers.location, u).toString(), redirects + 1);
+        }
+        if (res.statusCode !== 200) {
+          res.resume();
+          return reject(new Error('download HTTP ' + res.statusCode));
+        }
+        const out = fs.createWriteStream(dest);
+        res.pipe(out);
+        out.on('finish', () => out.close(() => resolve(dest)));
+        out.on('error', reject);
+        res.on('error', reject);
+      }).on('error', reject);
+    };
+    follow(url, 0);
+  });
+}
+
+ipcMain.handle('update:check', async () => {
+  try {
+    const release = await fetchLatestRelease();
+    const latest = String(release.tag_name || '').replace(/^v/, '');
+    return { ok: true, current: MY_VERSION, latest, updateAvailable: cmpVersions(latest, MY_VERSION) > 0 };
+  } catch (err) {
+    return { ok: false, current: MY_VERSION, error: String(err.message || err) };
+  }
+});
+
+ipcMain.handle('update:install', async () => {
+  const result = { ok: false };
+  try {
+    const release = await fetchLatestRelease();
+    const latest = String(release.tag_name || '').replace(/^v/, '');
+    if (cmpVersions(latest, MY_VERSION) <= 0) {
+      result.error = 'already-up-to-date';
+      return result;
+    }
+    const asset = pickInstallerAsset(release);
+    if (!asset) {
+      result.error = 'installer-not-found';
+      return result;
+    }
+    const tmpDir = app.getPath('temp');
+    const ext = path.extname(asset.name);
+    const dest = path.join(tmpDir, asset.name);
+    result.status = 'downloading';
+    await downloadTo(asset.browser_download_url, dest);
+    result.status = 'downloaded';
+    if (ext === '.sh') {
+      fs.chmodSync(dest, 0o755);
+      const child = require('child_process').spawn('/bin/sh', [dest], {
+        detached: true, stdio: 'ignore', env: { ...process.env, UNTO_SILENT: '1' },
+      });
+      child.unref();
+    } else {
+      // NSIS: /S = silent, install over the previous version
+      const child = require('child_process').spawn(dest, ['/S'], {
+        detached: true, stdio: 'ignore',
+      });
+      child.unref();
+    }
+    result.ok = true;
+    result.installer = asset.name;
+    result.quitNeeded = true;
+  } catch (err) {
+    result.error = String(err.message || err);
+  }
+  return result;
+});
+
+// Privacy: wipe cache + cookies + storage (settings page) ------------------
 ipcMain.handle('privacy:clearBrowsing', async () => {
   const s = session.defaultSession;
   await s.clearCache();
