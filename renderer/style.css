@@ -139,6 +139,18 @@ webview {
   background: #fff;
 }
 
+/* Internal pages (start page, history, bookmarks, settings) live in an
+   iframe. Without explicit sizing an iframe defaults to 300x150 — the
+   "tiny square" bug. Fill the whole content area like a webview. */
+iframe.untoframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: var(--bg);
+}
+
 /* ---------- menu ---------- */
 #menu {
   position: fixed;

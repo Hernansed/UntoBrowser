@@ -74,9 +74,6 @@ function createTab(url = START_PAGE, isPrivate = false) {
     ensureWebview(tab);
   }
 
-  // handle popups requested by main
-  api.onOpenUrlRequest((u) => createTab(u, false));
-
   activateTab(id);
   return id;
 }
@@ -94,7 +91,6 @@ function ensureWebview(tab) {
   view.src = tab.pendingUrl || HOME_URL;
   els.content.appendChild(view);
   tab.view = view;
-
   // ---- webview events ----
   view.addEventListener('did-start-loading', () => {
     if (tab.id === activeId) els.reload.textContent = '\u2715';
@@ -147,11 +143,7 @@ function ensureWebview(tab) {
     }
   });
 
-  // handle popups requested by main
-  api.onOpenUrlRequest((u) => createTab(u, false));
-
-  activateTab(id);
-  return id;
+  return view;
 }
 
 // Shared light-frame pool: ONE iframe per internal page, created once and
@@ -348,6 +340,9 @@ document.addEventListener('keydown', (e) => {
   else if (e.altKey && e.key === 'ArrowLeft') { e.preventDefault(); tab?.view.goBack(); }
   else if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); tab?.view.goForward(); }
 });
+
+// handle popups requested by main (register ONCE, not per tab)
+api.onOpenUrlRequest((u) => createTab(u, false));
 
 // ------------------------------------------------------------------- boot
 (async function boot() {
